@@ -1,0 +1,4 @@
+persona_id,email_istituzionale,email_pec,form_contatti_url,telefono_e164,indirizzo_ufficio,sito_ufficiale,fonte_url,fonte_data
+http://dati.senato.it/senatore/32,,,,,,,https://dati.senato.it/sparql,2025-08-18
+http://dati.senato.it/senatore/32578,,,,,,,https://dati.senato.it/sparql,2025-08-18
+http://dati.senato.it/senatore/36381,,,,,,,https://dati.senato.it/sparql,2025-08-18

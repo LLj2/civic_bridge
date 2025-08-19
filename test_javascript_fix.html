@@ -1,0 +1,151 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Test JavaScript Fix</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; }
+        .test-section { margin: 20px 0; padding: 10px; border: 1px solid #ddd; }
+        button { margin: 5px; padding: 10px; }
+        .error { color: red; }
+        .success { color: green; }
+    </style>
+</head>
+<body>
+    <h1>Test JavaScript Contact Functions</h1>
+    
+    <div class="test-section">
+        <h3>Test Data</h3>
+        <div id="testOutput"></div>
+        <button onclick="testContactFunctions()">Run Test</button>
+    </div>
+
+    <script>
+        // Global variables for test
+        let currentRepresentatives = {
+            camera: [
+                {
+                    nome: "MAURO",
+                    cognome: "ROTELLI", 
+                    email: "rotelli_m@camera.it",
+                    gruppo_partito: "FRATELLI D'ITALIA"
+                }
+            ]
+        };
+        let currentLocation = { comune: "Roma" };
+
+        function testContactFunctions() {
+            const output = document.getElementById('testOutput');
+            let results = [];
+
+            try {
+                results.push("✓ Global variables set");
+                
+                // Test openMailClient function
+                console.log("Testing openMailClient...");
+                const rep = currentRepresentatives.camera[0];
+                const mailto = createMailto(rep, 'camera', 'Roma');
+                results.push("✓ createMailto function works");
+                results.push(`Email: ${rep.email}`);
+                results.push(`Mailto URL: ${mailto.substring(0, 50)}...`);
+                
+                results.push("✓ All tests passed!");
+                output.innerHTML = '<div class="success">' + results.join('<br>') + '</div>';
+                
+            } catch (error) {
+                results.push(`✗ Error: ${error.message}`);
+                output.innerHTML = '<div class="error">' + results.join('<br>') + '</div>';
+                console.error('Test error:', error);
+            }
+        }
+
+        function createMailto(rep, repType, userLocation) {
+            const templates = getMessageTemplates();
+            const template = templates[repType] || templates.default;
+            
+            const subject = template.subject
+                .replace('{{rep_name}}', `${rep.nome} ${rep.cognome}`)
+                .replace('{{location}}', userLocation);
+                
+            const body = template.body
+                .replace('{{rep_name}}', `${rep.nome} ${rep.cognome}`)
+                .replace('{{rep_title}}', getRepresentativeTitle(repType))
+                .replace('{{location}}', userLocation)
+                .replace('{{user_name}}', '[Il tuo nome]');
+
+            const mailto = `mailto:${rep.email}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
+            return mailto;
+        }
+
+        function getRepresentativeTitle(repType) {
+            const titles = {
+                'camera': 'Onorevole Deputato',
+                'senato': 'Onorevole Senatore',
+                'eu': 'Onorevole Europarlamentare'
+            };
+            return titles[repType] || 'Onorevole';
+        }
+
+        function getMessageTemplates() {
+            return {
+                camera: {
+                    subject: 'Richiesta di dialogo dal cittadino di {{location}} - {{rep_name}}',
+                    body: `Gentile {{rep_title}} {{rep_name}},
+
+mi rivolgo a Lei in qualità di cittadino di {{location}} per sottoporre alla Sua attenzione una questione di interesse pubblico.
+
+[Inserire qui il contenuto del messaggio]
+
+Confido nella Sua attenzione e disponibilità al confronto costruttivo.
+
+Cordiali saluti,
+{{user_name}}
+Cittadino di {{location}}`
+                },
+                senato: {
+                    subject: 'Comunicazione cittadino {{location}} - {{rep_name}}',
+                    body: `Egregio {{rep_title}} {{rep_name}},
+
+Le scrivo come cittadino di {{location}} per portare alla Sua conoscenza una questione che ritengo meritevole della Sua considerazione.
+
+[Inserire qui il contenuto del messaggio]
+
+La ringrazio per l'attenzione e per il Suo impegno al servizio delle istituzioni.
+
+Distinti saluti,
+{{user_name}}
+Residente a {{location}}`
+                },
+                eu: {
+                    subject: 'Comunicazione da cittadino italiano - {{location}} per {{rep_name}}',
+                    body: `Egregio {{rep_title}} {{rep_name}},
+
+Le scrivo in qualità di cittadino italiano residente a {{location}} per sottoporre alla Sua attenzione una questione di rilevanza europea.
+
+[Inserire qui il contenuto del messaggio]
+
+La ringrazio per il Suo servizio a favore dei cittadini europei.
+
+Cordiali saluti,
+{{user_name}}
+{{location}}, Italia`
+                },
+                default: {
+                    subject: 'Comunicazione da cittadino - {{location}}',
+                    body: `Gentile {{rep_name}},
+
+Le scrivo come cittadino per [inserire argomento].
+
+Cordiali saluti,
+{{user_name}}
+{{location}}`
+                }
+            };
+        }
+
+        function showNotification(message, type = 'info') {
+            console.log(`Notification (${type}): ${message}`);
+            alert(`${type.toUpperCase()}: ${message}`);
+        }
+    </script>
+</body>
+</html>

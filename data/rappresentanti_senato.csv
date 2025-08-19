@@ -1,0 +1,4 @@
+persona_id,nome,cognome,carica,gruppo_partito,circoscrizione_o_collegio,regione,mandato_inizio,mandato_fine,fonte_url,fonte_data
+http://dati.senato.it/senatore/32,,,senatore,,,,,,https://dati.senato.it/sparql,2025-08-18
+http://dati.senato.it/senatore/32578,,,senatore,,,,,,https://dati.senato.it/sparql,2025-08-18
+http://dati.senato.it/senatore/36381,,,senatore,,,,,,https://dati.senato.it/sparql,2025-08-18
