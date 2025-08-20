@@ -760,6 +760,81 @@ def home():
             .autocomplete-item:last-child {
                 border-bottom: none;
             }
+            
+            /* Institution Section Styles */
+            .institution-section {
+                margin: 25px 0;
+                border: 1px solid #e2e8f0;
+                border-radius: 10px;
+                background: white;
+                box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+            }
+            .institution-header {
+                padding: 20px;
+                background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%);
+                border-bottom: 1px solid #e2e8f0;
+                border-radius: 10px 10px 0 0;
+                cursor: pointer;
+                display: flex;
+                justify-content: space-between;
+                align-items: center;
+                transition: all 0.2s ease;
+            }
+            .institution-header:hover {
+                background: linear-gradient(135deg, #f1f5f9 0%, #cbd5e1 100%);
+            }
+            .institution-title {
+                display: flex;
+                align-items: center;
+                gap: 12px;
+                font-size: 20px;
+                font-weight: 600;
+                color: #1a202c;
+                margin: 0;
+            }
+            .institution-count {
+                background: #667eea;
+                color: white;
+                padding: 6px 12px;
+                border-radius: 20px;
+                font-size: 14px;
+                font-weight: 500;
+            }
+            .collapse-icon {
+                font-size: 24px;
+                color: #667eea;
+                transition: transform 0.3s ease;
+            }
+            .institution-section.collapsed .collapse-icon {
+                transform: rotate(-90deg);
+            }
+            .institution-content {
+                padding: 0;
+                overflow: hidden;
+                transition: all 0.3s ease;
+            }
+            .institution-section.collapsed .institution-content {
+                max-height: 0;
+                padding: 0;
+            }
+            .institution-representatives {
+                padding: 20px;
+            }
+            
+            /* Enhanced Representative Cards */
+            .representative {
+                border: 1px solid #e2e8f0;
+                padding: 20px;
+                margin: 15px 0;
+                border-radius: 8px;
+                background: white;
+                box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+                transition: all 0.2s ease;
+            }
+            .representative:hover {
+                box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+                border-color: #cbd5e1;
+            }
         </style>
     </head>
     <body>
@@ -806,6 +881,14 @@ def home():
                     </div>
                     
                     <form id="messageForm">
+                        <div class="form-group">
+                            <label class="form-label" for="messageTheme">Seleziona tema del messaggio</label>
+                            <select id="messageTheme" class="form-input" onchange="updateMessageTemplate()">
+                                <option value="default">📝 Messaggio generico</option>
+                                <option value="palestine">🇵🇸 Gaza e Palestina - Azione Umanitaria</option>
+                            </select>
+                        </div>
+                        
                         <div class="form-group">
                             <label class="form-label" for="senderName">Il tuo nome *</label>
                             <input type="text" id="senderName" class="form-input" placeholder="Mario Rossi" required>
@@ -975,7 +1058,18 @@ def home():
                 
                 // Camera
                 if (reps.camera && reps.camera.length > 0) {
-                    html += `<h3>🏛️ Camera dei Deputati (${summary.deputati_count})</h3>`;
+                    html += `
+                    <div class="institution-section collapsed" id="camera-section">
+                        <div class="institution-header" onclick="toggleSection('camera-section')">
+                            <h3 class="institution-title">
+                                🏛️ Camera dei Deputati
+                                <span class="institution-count">${summary.deputati_count}</span>
+                            </h3>
+                            <span class="collapse-icon">▶</span>
+                        </div>
+                        <div class="institution-content">
+                            <div class="institution-representatives">
+                    `;
                     reps.camera.forEach((rep, i) => {
                         html += `
                             <div class="representative">
@@ -991,11 +1085,17 @@ def home():
                                     <div class="email-display">📧 ${rep.email || 'Email non disponibile'}</div>
                                     ${rep.email && rep.email !== 'Non disponibile' ? `
                                         <div class="contact-options">
-                                            <button class="contact-btn btn-email" onclick="openMailClient(${i}, 'camera', '${location.comune.replace(/'/g, "\\'")}')" >
-                                                📧 Apri Email Client
-                                            </button>
+                                            <div style="margin-bottom: 8px; font-size: 13px; color: #4a5568;">Email con tema:</div>
+                                            <div style="display: flex; gap: 8px; margin-bottom: 8px; flex-wrap: wrap;">
+                                                <button class="contact-btn btn-email" onclick="openMailClient(${i}, 'camera', '${location.comune.replace(/'/g, "\\'")}', 'default')" style="font-size: 12px;">
+                                                    📝 Generico
+                                                </button>
+                                                <button class="contact-btn btn-email" onclick="openMailClient(${i}, 'camera', '${location.comune.replace(/'/g, "\\'")}', 'palestine')" style="font-size: 12px; background: #dc2626;">
+                                                    🇵🇸 Gaza
+                                                </button>
+                                            </div>
                                             <button class="contact-btn btn-send-direct" onclick="sendDirectMessage(${i}, 'camera', '${location.comune.replace(/'/g, "\\'")}')" >
-                                                🚀 Invia Diretto
+                                                🚀 Invia Diretto (con scelta tema)
                                             </button>
                                         </div>
                                     ` : ''}
@@ -1003,11 +1103,28 @@ def home():
                             </div>
                         `;
                     });
+                    
+                    html += `
+                            </div>
+                        </div>
+                    </div>
+                    `;
                 }
                 
                 // Senato
                 if (reps.senato && reps.senato.length > 0) {
-                    html += `<h3>🏛️ Senato della Repubblica (${summary.senatori_count})</h3>`;
+                    html += `
+                    <div class="institution-section collapsed" id="senato-section">
+                        <div class="institution-header" onclick="toggleSection('senato-section')">
+                            <h3 class="institution-title">
+                                🏛️ Senato della Repubblica
+                                <span class="institution-count">${summary.senatori_count}</span>
+                            </h3>
+                            <span class="collapse-icon">▶</span>
+                        </div>
+                        <div class="institution-content">
+                            <div class="institution-representatives">
+                    `;
                     reps.senato.forEach((rep, i) => {
                         html += `
                             <div class="representative">
@@ -1023,11 +1140,17 @@ def home():
                                     <div class="email-display">📧 ${rep.email || 'Email non disponibile'}</div>
                                     ${rep.email && rep.email !== 'Non disponibile' ? `
                                         <div class="contact-options">
-                                            <button class="contact-btn btn-email" onclick="openMailClient(${i}, 'senato', '${location.comune.replace(/'/g, "\\'")}')" >
-                                                📧 Apri Email Client
-                                            </button>
+                                            <div style="margin-bottom: 8px; font-size: 13px; color: #4a5568;">Email con tema:</div>
+                                            <div style="display: flex; gap: 8px; margin-bottom: 8px; flex-wrap: wrap;">
+                                                <button class="contact-btn btn-email" onclick="openMailClient(${i}, 'senato', '${location.comune.replace(/'/g, "\\'")}', 'default')" style="font-size: 12px;">
+                                                    📝 Generico
+                                                </button>
+                                                <button class="contact-btn btn-email" onclick="openMailClient(${i}, 'senato', '${location.comune.replace(/'/g, "\\'")}', 'palestine')" style="font-size: 12px; background: #dc2626;">
+                                                    🇵🇸 Gaza
+                                                </button>
+                                            </div>
                                             <button class="contact-btn btn-send-direct" onclick="sendDirectMessage(${i}, 'senato', '${location.comune.replace(/'/g, "\\'")}')" >
-                                                🚀 Invia Diretto
+                                                🚀 Invia Diretto (con scelta tema)
                                             </button>
                                         </div>
                                     ` : ''}
@@ -1035,11 +1158,28 @@ def home():
                             </div>
                         `;
                     });
+                    
+                    html += `
+                            </div>
+                        </div>
+                    </div>
+                    `;
                 }
                 
                 // EU Parliament
                 if (reps.eu_parliament && reps.eu_parliament.length > 0) {
-                    html += `<h3>🇪🇺 Parlamento Europeo (${summary.mep_count})</h3>`;
+                    html += `
+                    <div class="institution-section collapsed" id="eu-section">
+                        <div class="institution-header" onclick="toggleSection('eu-section')">
+                            <h3 class="institution-title">
+                                🇪🇺 Parlamento Europeo
+                                <span class="institution-count">${summary.mep_count}</span>
+                            </h3>
+                            <span class="collapse-icon">▶</span>
+                        </div>
+                        <div class="institution-content">
+                            <div class="institution-representatives">
+                    `;
                     reps.eu_parliament.forEach((rep, i) => {
                         html += `
                             <div class="representative">
@@ -1055,11 +1195,17 @@ def home():
                                     <div class="email-display">📧 ${rep.email || 'Email non disponibile'}</div>
                                     ${rep.email && rep.email !== 'Non disponibile' ? `
                                         <div class="contact-options">
-                                            <button class="contact-btn btn-email" onclick="openMailClient(${i}, 'eu', '${location.comune.replace(/'/g, "\\'")}')" >
-                                                📧 Apri Email Client
-                                            </button>
+                                            <div style="margin-bottom: 8px; font-size: 13px; color: #4a5568;">Email con tema:</div>
+                                            <div style="display: flex; gap: 8px; margin-bottom: 8px; flex-wrap: wrap;">
+                                                <button class="contact-btn btn-email" onclick="openMailClient(${i}, 'eu', '${location.comune.replace(/'/g, "\\'")}', 'default')" style="font-size: 12px;">
+                                                    📝 Generico
+                                                </button>
+                                                <button class="contact-btn btn-email" onclick="openMailClient(${i}, 'eu', '${location.comune.replace(/'/g, "\\'")}', 'palestine')" style="font-size: 12px; background: #dc2626;">
+                                                    🇵🇸 Gaza
+                                                </button>
+                                            </div>
                                             <button class="contact-btn btn-send-direct" onclick="sendDirectMessage(${i}, 'eu', '${location.comune.replace(/'/g, "\\'")}')" >
-                                                🚀 Invia Diretto
+                                                🚀 Invia Diretto (con scelta tema)
                                             </button>
                                         </div>
                                     ` : ''}
@@ -1067,9 +1213,29 @@ def home():
                             </div>
                         `;
                     });
+                    
+                    html += `
+                            </div>
+                        </div>
+                    </div>
+                    `;
                 }
                 
                 document.getElementById('resultsContent').innerHTML = html;
+            }
+            
+            // Toggle collapsible sections
+            function toggleSection(sectionId) {
+                const section = document.getElementById(sectionId);
+                const icon = section.querySelector('.collapse-icon');
+                
+                if (section.classList.contains('collapsed')) {
+                    section.classList.remove('collapsed');
+                    icon.textContent = '▼';
+                } else {
+                    section.classList.add('collapsed');
+                    icon.textContent = '▶';
+                }
             }
             
             // Allow Enter key to trigger search
@@ -1089,8 +1255,8 @@ def home():
             let currentRepresentatives = null;
             let currentLocation = null;
             
-            // Updated contact functions that use indices
-            function openMailClient(index, repType, userLocation) {
+            // Updated contact functions that use indices  
+            function openMailClient(index, repType, userLocation, theme = 'default') {
                 if (!currentRepresentatives || !currentRepresentatives[repType] || !currentRepresentatives[repType][index]) {
                     console.error('Representative not found:', index, repType);
                     return;
@@ -1103,7 +1269,7 @@ def home():
                 }
                 
                 try {
-                    const mailto = createMailto(rep, repType, userLocation);
+                    const mailto = createMailto(rep, repType, userLocation, theme);
                     window.open(mailto, '_blank');
                     showNotification("Client email aperto! Verifica che il messaggio sia stato creato correttamente.", "success");
                 } catch (error) {
@@ -1122,9 +1288,9 @@ def home():
             }
             
             // Contact functionality
-            function createMailto(rep, repType, userLocation) {
-                const templates = getMessageTemplates();
-                const template = templates[repType] || templates.default;
+            function createMailto(rep, repType, userLocation, theme = 'default') {
+                const templates = getMessageTemplates(theme);
+                const template = templates[repType] || templates.camera;
                 
                 const subject = template.subject
                     .replace('{{rep_name}}', `${rep.nome} ${rep.cognome}`)
@@ -1149,7 +1315,90 @@ def home():
                 return titles[repType] || 'Gentile Rappresentante';
             }
             
-            function getMessageTemplates() {
+            // Palestine theme templates
+            function getPalestineTemplates() {
+                return {
+                    camera: {
+                        subject: 'Cittadino di {{location}} - Azione urgente per Gaza e diritti umani',
+                        body: `Onorevole Deputato {{rep_name}},
+
+Le scrivo come cittadino di {{location}} profondamente preoccupato per la situazione umanitaria a Gaza e in Palestina.
+
+Chiedo il Suo impegno parlamentare su quattro punti urgenti:
+
+1. CORRIDOIO UMANITARIO: Sollecitare l'apertura immediata di un corridoio umanitario per far entrare gli aiuti a Gaza, senza se e senza ma.
+
+2. PROTEZIONE GIORNALISTI: Garantire l'accesso sicuro ai giornalisti nella Striscia di Gaza per assicurare una corretta informazione.
+
+3. SANZIONI MIRATE: Promuovere sanzioni specifiche contro i leader del movimento dei coloni israeliani.
+
+4. CONTROLLO EXPORT MILITARE: Presentare interrogazioni parlamentari per verificare e, se necessario, sospendere l'export militare verso Israele secondo la Legge 185/1990.
+
+[SEZIONE PERSONALIZZABILE - Aggiungi qui le tue considerazioni specifiche]
+
+La ringrazio per l'attenzione e confido nel Suo impegno per i diritti umani e la pace.
+
+Cordiali saluti,
+{{user_name}}
+Cittadino di {{location}}`
+                    },
+                    senato: {
+                        subject: 'Cittadino di {{location}} - Richiesta azione senatoriale per Gaza',
+                        body: `Onorevole Senatore {{rep_name}},
+
+Mi rivolgo a Lei come cittadino di {{location}} per sollecitare un'azione decisa del Senato sulla crisi umanitaria a Gaza.
+
+Ritengo prioritari questi interventi legislativi:
+
+1. CORRIDOIO UMANITARIO: Impegnare il Governo per l'apertura immediata di corridoi umanitari verso Gaza, senza precondizioni.
+
+2. LIBERTÀ DI STAMPA: Garantire protezione e accesso sicuro per i giornalisti che documentano la situazione nella Striscia.
+
+3. SANZIONI EUROPEE: Sostenere a livello europeo sanzioni mirate contro i responsabili dell'espansione dei coloni.
+
+4. CONTROLLO ARMI: Utilizzare gli strumenti del Senato per verificare il rispetto della Legge 185/1990 sull'export militare.
+
+[SEZIONE PERSONALIZZABILE - Scrivi qui le tue ragioni personali]
+
+Confido nella Sua sensibilità per questi temi di giustizia internazionale.
+
+Distinti saluti,
+{{user_name}}
+{{location}}`
+                    },
+                    eu: {
+                        subject: 'Cittadino italiano - Azione UE urgente per Gaza e Palestina',
+                        body: `Onorevole Europarlamentare {{rep_name}},
+
+Le scrivo come cittadino italiano per sollecitare un'azione europea sulla crisi a Gaza.
+
+Chiedo il Suo sostegno per:
+
+1. AIUTI UMANITARI UE: Promuovere corridoi umanitari europei immediati verso Gaza.
+
+2. PROTEZIONE MEDIA: Sostenere risoluzioni UE per la sicurezza dei giornalisti nell'area.
+
+3. SANZIONI UE: Avanzare proposte di sanzioni europee contro l'espansione illegale dei coloni.
+
+4. CONTROLLO ARMI UE: Verificare l'applicazione delle direttive europee sull'export di armi.
+
+[SEZIONE PERSONALIZZABILE - Le tue considerazioni]
+
+La ringrazio per il Suo impegno per i diritti umani in Europa.
+
+Cordiali saluti,
+{{user_name}}
+{{location}}, Italia`
+                    }
+                };
+            }
+
+            function getMessageTemplates(theme = 'default') {
+                if (theme === 'palestine') {
+                    return getPalestineTemplates();
+                }
+                
+                // Default templates
                 return {
                     camera: {
                         subject: 'Cittadino di {{location}} - Richiesta informazioni',
@@ -1229,22 +1478,8 @@ Messaggio inviato tramite Civic Bridge (https://civic-bridge.it)`
                 const recipientDiv = document.getElementById('composerRecipient');
                 recipientDiv.textContent = `A: ${currentRepresentative.nome} ${currentRepresentative.cognome} (${currentRepresentative.email})`;
                 
-                // Pre-fill the form
-                const templates = getMessageTemplates();
-                const template = templates[currentRepType] || templates.camera;
-                
-                const subjectInput = document.getElementById('messageSubject');
-                const bodyTextarea = document.getElementById('messageBody');
-                
-                subjectInput.value = template.subject
-                    .replace('{{rep_name}}', `${currentRepresentative.nome} ${currentRepresentative.cognome}`)
-                    .replace('{{location}}', currentUserLocation);
-                
-                bodyTextarea.value = template.body
-                    .replace('{{rep_name}}', `${currentRepresentative.nome} ${currentRepresentative.cognome}`)
-                    .replace('{{rep_title}}', getRepresentativeTitle(currentRepType))
-                    .replace('{{location}}', currentUserLocation)
-                    .replace('{{user_name}}', '[Il tuo nome]');
+                // Pre-fill the form with default template
+                updateMessageTemplate();
                 
                 // Show modal
                 const modal = document.getElementById('messageComposerModal');
@@ -1258,6 +1493,32 @@ Messaggio inviato tramite Civic Bridge (https://civic-bridge.it)`
                 }, 300);
             }
             
+            // Update message template based on theme selection
+            function updateMessageTemplate() {
+                if (!currentRepresentative) return;
+                
+                const themeSelect = document.getElementById('messageTheme');
+                const selectedTheme = themeSelect ? themeSelect.value : 'default';
+                
+                const templates = getMessageTemplates(selectedTheme);
+                const template = templates[currentRepType] || templates.camera;
+                
+                const subjectInput = document.getElementById('messageSubject');
+                const bodyTextarea = document.getElementById('messageBody');
+                
+                if (subjectInput && bodyTextarea) {
+                    subjectInput.value = template.subject
+                        .replace('{{rep_name}}', `${currentRepresentative.nome} ${currentRepresentative.cognome}`)
+                        .replace('{{location}}', currentUserLocation);
+                    
+                    bodyTextarea.value = template.body
+                        .replace('{{rep_name}}', `${currentRepresentative.nome} ${currentRepresentative.cognome}`)
+                        .replace('{{rep_title}}', getRepresentativeTitle(currentRepType))
+                        .replace('{{location}}', currentUserLocation)
+                        .replace('{{user_name}}', '[Il tuo nome]');
+                }
+            }
+
             function closeMessageComposer() {
                 const modal = document.getElementById('messageComposerModal');
                 modal.classList.remove('show');

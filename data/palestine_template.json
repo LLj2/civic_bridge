@@ -1,0 +1,44 @@
+{
+  "theme": {
+    "id": "palestine",
+    "title": "Gaza e Palestina - Azione Umanitaria",
+    "icon": "🇵🇸",
+    "description": "Richieste urgenti per la situazione a Gaza e Palestina",
+    "policy_points": [
+      {
+        "id": "corridoio_umanitario",
+        "title": "Corridoio umanitario immediato",
+        "description": "Apertura immediata corridoio umanitario senza condizioni"
+      },
+      {
+        "id": "giornalisti",
+        "title": "Accesso sicuro giornalisti", 
+        "description": "Garantire accesso sicuro ai giornalisti nella Striscia"
+      },
+      {
+        "id": "sanzioni_coloni",
+        "title": "Sanzioni contro coloni",
+        "description": "Sanzioni mirate contro leader movimento coloni"
+      },
+      {
+        "id": "export_militare", 
+        "title": "Controllo export militare",
+        "description": "Interrogazioni e sospensione export militare (L. 185/1990)"
+      }
+    ],
+    "templates": {
+      "camera": {
+        "subject": "Cittadino di {{location}} - Azione urgente per Gaza e diritti umani",
+        "body": "Onorevole Deputato {{rep_name}},\n\nLe scrivo come cittadino di {{location}} profondamente preoccupato per la situazione umanitaria a Gaza e in Palestina.\n\nChiedo il Suo impegno parlamentare su quattro punti urgenti:\n\n1. CORRIDOIO UMANITARIO: Sollecitare l'apertura immediata di un corridoio umanitario per far entrare gli aiuti a Gaza, senza se e senza ma.\n\n2. PROTEZIONE GIORNALISTI: Garantire l'accesso sicuro ai giornalisti nella Striscia di Gaza per assicurare una corretta informazione.\n\n3. SANZIONI MIRATE: Promuovere sanzioni specifiche contro i leader del movimento dei coloni israeliani.\n\n4. CONTROLLO EXPORT MILITARE: Presentare interrogazioni parlamentari per verificare e, se necessario, sospendere l'export militare verso Israele secondo la Legge 185/1990.\n\n[SEZIONE PERSONALIZZABILE - Aggiungi qui le tue considerazioni specifiche]\n\nLa ringrazio per l'attenzione e confido nel Suo impegno per i diritti umani e la pace.\n\nCordiali saluti,\n{{user_name}}\nCittadino di {{location}}"
+      },
+      "senato": {
+        "subject": "Cittadino di {{location}} - Richiesta azione senatoriale per Gaza",
+        "body": "Onorevole Senatore {{rep_name}},\n\nMi rivolgo a Lei come cittadino di {{location}} per sollecitare un'azione decisa del Senato sulla crisi umanitaria a Gaza.\n\nRitengo prioritari questi interventi legislativi:\n\n1. CORRIDOIO UMANITARIO: Impegnare il Governo per l'apertura immediata di corridoi umanitari verso Gaza, senza precondizioni.\n\n2. LIBERTÀ DI STAMPA: Garantire protezione e accesso sicuro per i giornalisti che documentano la situazione nella Striscia.\n\n3. SANZIONI EUROPEE: Sostenere a livello europeo sanzioni mirate contro i responsabili dell'espansione dei coloni.\n\n4. CONTROLLO ARMI: Utilizzare gli strumenti del Senato per verificare il rispetto della Legge 185/1990 sull'export militare.\n\n[SEZIONE PERSONALIZZABILE - Scrivi qui le tue ragioni personali]\n\nConfido nella Sua sensibilità per questi temi di giustizia internazionale.\n\nDistinti saluti,\n{{user_name}}\n{{location}}"
+      },
+      "eu": {
+        "subject": "Cittadino italiano - Azione UE urgente per Gaza e Palestina", 
+        "body": "Onorevole Europarlamentare {{rep_name}},\n\nLe scrivo come cittadino italiano per sollecitare un'azione europea sulla crisi a Gaza.\n\nChiedo il Suo sostegno per:\n\n1. AIUTI UMANITARI UE: Promuovere corridoi umanitari europei immediati verso Gaza.\n\n2. PROTEZIONE MEDIA: Sostenere risoluzioni UE per la sicurezza dei giornalisti nell'area.\n\n3. SANZIONI UE: Avanzare proposte di sanzioni europee contro l'espansione illegale dei coloni.\n\n4. CONTROLLO ARMI UE: Verificare l'applicazione delle direttive europee sull'export di armi.\n\n[SEZIONE PERSONALIZZABILE - Le tue considerazioni]\n\nLa ringrazio per il Suo impegno per i diritti umani in Europa.\n\nCordiali saluti,\n{{user_name}}\n{{location}}, Italia"
+      }
+    }
+  }
+}
