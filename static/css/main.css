@@ -69,3 +69,8 @@ button:hover {
     color: #667eea; 
     font-weight: bold; 
 }
+
+/* Utility classes */
+.is-hidden {
+    display: none !important;
+}

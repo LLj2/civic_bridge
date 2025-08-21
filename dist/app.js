@@ -195,7 +195,7 @@ function showAutocompleteResults(results) {
     list.appendChild(item);
   });
   
-  list.style.display = 'block';
+  list.classList.add('is-visible');
 }
 
 /**
@@ -204,7 +204,7 @@ function showAutocompleteResults(results) {
 function hideAutocomplete() {
   const list = document.getElementById('autocompleteList');
   if (list) {
-    list.style.display = 'none';
+    list.classList.remove('is-visible');
   }
 }
 
@@ -222,7 +222,7 @@ export async function searchRepresentatives() {
   const resultsDiv = document.getElementById('results');
   const contentDiv = document.getElementById('resultsContent');
   
-  resultsDiv.style.display = 'block';
+  resultsDiv.classList.remove('is-hidden');
   contentDiv.innerHTML = '<div class="loading">Ricerca in corso...</div>';
   
   try {

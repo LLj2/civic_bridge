@@ -12,11 +12,72 @@
     align-items: flex-start;
     justify-content: space-between;
     cursor: pointer;
+    gap: 12px;
 }
 
 .representative:hover {
     border-color: #e2e8f0;
     box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+}
+
+/* Representative Selection */
+.rep-selection {
+    flex-shrink: 0;
+    padding-top: 2px;
+}
+
+.rep-checkbox {
+    display: none;
+}
+
+.checkbox-label {
+    display: block;
+    width: 20px;
+    height: 20px;
+    border: 2px solid #cbd5e1;
+    border-radius: 4px;
+    cursor: pointer;
+    position: relative;
+    transition: all 0.2s ease;
+}
+
+.checkbox-label:hover {
+    border-color: #667eea;
+    background: #f7fafc;
+}
+
+.rep-checkbox:checked + .checkbox-label {
+    background: #667eea;
+    border-color: #667eea;
+}
+
+.rep-checkbox:checked + .checkbox-label::after {
+    content: '✓';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    color: white;
+    font-size: 12px;
+    font-weight: bold;
+}
+
+.rep-checkbox:disabled + .checkbox-label {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+/* Visibility Control Classes */
+.hidden {
+    display: none !important;
+}
+
+.visible {
+    display: block !important;
+}
+
+.representative.visible {
+    display: flex !important;
 }
 
 .rep-photo {
@@ -80,6 +141,114 @@
     background: #d1d5db;
     color: #9ca3af;
     cursor: not-allowed;
+}
+
+/* Filter Controls */
+.filter-controls {
+    margin: 20px 0;
+    padding: 20px;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    border-radius: 12px;
+    color: white;
+}
+
+.filter-group {
+    margin-bottom: 15px;
+}
+
+.filter-group:last-child {
+    margin-bottom: 0;
+}
+
+.filter-group label {
+    display: block;
+    font-weight: 600;
+    margin-bottom: 12px;
+    font-size: 16px;
+}
+
+.search-results-input {
+    padding: 10px 15px;
+    border: 2px solid rgba(255, 255, 255, 0.3);
+    border-radius: 8px;
+    background: rgba(255, 255, 255, 0.2);
+    color: white;
+    font-size: 14px;
+    min-width: 250px;
+    margin-right: 10px;
+}
+
+.search-results-input::placeholder {
+    color: rgba(255, 255, 255, 0.7);
+}
+
+.search-results-input:focus {
+    outline: none;
+    border-color: rgba(255, 255, 255, 0.8);
+    background: rgba(255, 255, 255, 0.3);
+}
+
+.filter-buttons {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+}
+
+.filter-btn {
+    padding: 10px 18px;
+    background: rgba(255, 255, 255, 0.2);
+    color: white;
+    border: 2px solid rgba(255, 255, 255, 0.3);
+    border-radius: 25px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    font-weight: 500;
+    font-size: 14px;
+}
+
+.filter-btn:hover {
+    background: rgba(255, 255, 255, 0.3);
+    border-color: rgba(255, 255, 255, 0.5);
+    transform: translateY(-1px);
+}
+
+.filter-btn.active {
+    background: white;
+    color: #667eea;
+    border-color: white;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+}
+
+/* Section Controls */
+.section-controls {
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+    margin: 20px 0;
+    padding: 20px;
+    background: #f8fafc;
+    border-radius: 8px;
+    border: 1px solid #e2e8f0;
+}
+
+.control-group {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    flex-wrap: wrap;
+}
+
+.control-label {
+    font-weight: 600;
+    color: #4a5568;
+    min-width: 80px;
+}
+
+.section-controls button {
+    padding: 8px 16px;
+    font-size: 14px;
+    border-radius: 6px;
+    transition: all 0.2s ease;
 }
 
 /* Institution Sections */
@@ -169,6 +338,10 @@
     overflow-y: auto;
     z-index: 1000;
     display: none;
+}
+
+.autocomplete-list.is-visible {
+    display: block !important;
 }
 
 .autocomplete-item {
