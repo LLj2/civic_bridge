@@ -447,14 +447,49 @@ function openMailtoClient(subject, body) {
  * Copy text to clipboard
  */
 export function copyToClipboard() {
-  const subject = document.getElementById('subjectInput').value;
-  const body = document.getElementById('bodyTextarea').value;
-  const text = `Oggetto: ${subject}\n\n${body}`;
+  const subjectInput = document.getElementById('subjectInput');
+  const bodyTextarea = document.getElementById('bodyTextarea');
   
-  navigator.clipboard.writeText(text).then(() => {
+  if (!subjectInput || !bodyTextarea) {
+    alert('Errore: elementi del form non trovati.');
+    return;
+  }
+  
+  const subject = subjectInput.value || '';
+  const body = bodyTextarea.value || '';
+  
+  if (!subject && !body) {
+    alert('Nessun testo da copiare. Compila prima oggetto e messaggio.');
+    return;
+  }
+  
+  // Create the text to copy - include both subject and body
+  let textToCopy = '';
+  if (subject) {
+    textToCopy += `Oggetto: ${subject}`;
+  }
+  if (body) {
+    textToCopy += `${subject ? '\n\n' : ''}${body}`;
+  }
+  
+  // Copy to clipboard
+  navigator.clipboard.writeText(textToCopy).then(() => {
     alert('Testo copiato negli appunti!');
-  }).catch(() => {
-    alert('Errore nella copia del testo.');
+  }).catch((error) => {
+    console.error('Clipboard error:', error);
+    // Fallback for older browsers
+    try {
+      const textArea = document.createElement('textarea');
+      textArea.value = textToCopy;
+      document.body.appendChild(textArea);
+      textArea.select();
+      document.execCommand('copy');
+      document.body.removeChild(textArea);
+      alert('Testo copiato negli appunti!');
+    } catch (fallbackError) {
+      console.error('Fallback copy failed:', fallbackError);
+      alert('Errore nella copia del testo. Prova a selezionare e copiare manualmente.');
+    }
   });
 }
 
