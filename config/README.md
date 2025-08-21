@@ -22,6 +22,7 @@ Contains all themes, topics, and email templates. Structure:
   },
   "themes": {
     "theme_key": {
+      "order": 1,
       "title": "Display Name",
       "description": "Description for tooltip",
       "topics": [
@@ -65,16 +66,24 @@ Contains all themes, topics, and email templates. Structure:
 7. **Diritti civili e libertà** - Civil rights and freedoms
 8. **Altro argomento** - For other topics (no predefined topics)
 
+## Theme Ordering
+
+Themes are displayed in the dropdown in the order specified by the `order` field:
+- Lower numbers appear first (e.g., `"order": 1`)
+- Missing order defaults to 999 (appears at the end)
+- "Altro argomento" uses order 999 to always appear last
+
 ## Adding New Themes
 
 1. Add a new key to the `themes` object
-2. Provide `title` and optional `description`
+2. Provide `order` (number), `title` and optional `description`
 3. Add `topics` array with `id`, `label`, and optional `description`
 4. Restart server to load changes
 
 Example:
 ```json
 "nuovo_tema": {
+  "order": 5,
   "title": "Nuovo Tema",
   "description": "Descrizione del nuovo tema",
   "topics": [

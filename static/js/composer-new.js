@@ -155,7 +155,11 @@ function setupThemeDropdown() {
   
   themeSelect.innerHTML = '<option value="">Seleziona un tema...</option>';
   
-  Object.entries(themesConfig).forEach(([key, theme]) => {
+  // Sort themes by their order field to maintain consistent ordering
+  const sortedThemes = Object.entries(themesConfig)
+    .sort(([,a], [,b]) => (a.order || 999) - (b.order || 999));
+  
+  sortedThemes.forEach(([key, theme]) => {
     const option = document.createElement('option');
     option.value = key;
     option.textContent = theme.title;

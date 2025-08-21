@@ -12,6 +12,7 @@
   },
   "themes": {
   "guerra_palestina": {
+    "order": 1,
     "title": "Guerra in Palestina",
     "description": "Richieste relative al conflitto israelo-palestinese",
     "topics": [
@@ -48,6 +49,7 @@
     ]
   },
     "politiche_migrazione": {
+      "order": 2,
       "title": "Politiche di migrazione",
       "description": "Questioni relative alle politiche migratorie europee",
       "topics": [
@@ -74,6 +76,7 @@
       ]
     },
     "ambiente_clima": {
+      "order": 3,
       "title": "Ambiente e clima",
       "description": "Politiche ambientali e cambiamento climatico",
       "topics": [
@@ -100,6 +103,7 @@
       ]
     },
     "diritti_civili": {
+      "order": 4,
       "title": "Diritti civili e libertà",
       "description": "Tutela dei diritti fondamentali e delle libertà civili",
       "topics": [
@@ -126,6 +130,7 @@
       ]
     },
     "altro": {
+      "order": 999,
       "title": "Altro argomento",
       "description": "Per argomenti non inclusi nelle altre categorie",
       "topics": []

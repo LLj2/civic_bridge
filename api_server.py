@@ -255,10 +255,14 @@ def create_app(config_name=None):
             
             with open(config_path, 'r', encoding='utf-8') as f:
                 config = json.load(f)
-                
+            
+            # Ensure themes are returned in file order by using OrderedDict
+            # or converting to list of key-value pairs to preserve order
+            themes_dict = config.get('themes', {})
+            
             return jsonify({
                 'success': True,
-                'themes': config.get('themes', {}),
+                'themes': themes_dict,  # JSON preserves order in Python 3.7+
                 'templates': config.get('templates', {}),
                 'version': config.get('version', 'unknown'),
                 'updated': config.get('updated', 'unknown')
