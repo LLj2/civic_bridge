@@ -5,61 +5,70 @@
 
 import { getRepresentatives, getLocation } from './state.js';
 import { getPartyCode } from './utils.js';
+import { loadThemes } from './api.js';
 
 // Composer state
 let currentRecipient = null;
-let themes = [];
-let topics = {};
-
-// Theme and topic definitions
-const THEMES_AND_TOPICS = {
-  'guerra_palestina': {
-    title: 'Guerra in Palestina',
-    topics: [
-      { id: 'cessate_fuoco', label: 'Chiedere cessate il fuoco immediato' },
-      { id: 'aiuti_umanitari', label: 'Aumentare gli aiuti umanitari' },
-      { id: 'protezione_civili', label: 'Protezione dei civili' },
-      { id: 'diritti_umani', label: 'Rispetto dei diritti umani' }
-    ]
-  },
-  'politiche_migrazione': {
-    title: 'Politiche di migrazione',
-    topics: [
-      { id: 'accoglienza', label: 'Migliorare le politiche di accoglienza' },
-      { id: 'integrazione', label: 'Sostegno all\'integrazione' },
-      { id: 'corridoi_umanitari', label: 'Apertura di corridoi umanitari' },
-      { id: 'cooperazione_ue', label: 'Cooperazione europea sulla migrazione' }
-    ]
-  },
-  'ambiente_clima': {
-    title: 'Ambiente e clima',
-    topics: [
-      { id: 'green_deal', label: 'Implementazione del Green Deal europeo' },
-      { id: 'energie_rinnovabili', label: 'Investimenti in energie rinnovabili' },
-      { id: 'trasporti_sostenibili', label: 'Promozione dei trasporti sostenibili' },
-      { id: 'economia_circolare', label: 'Sviluppo dell\'economia circolare' }
-    ]
-  },
-  'lavoro_sociale': {
-    title: 'Lavoro e politiche sociali',
-    topics: [
-      { id: 'salario_minimo', label: 'Introduzione del salario minimo europeo' },
-      { id: 'diritti_lavoratori', label: 'Protezione dei diritti dei lavoratori' },
-      { id: 'giovani_lavoro', label: 'Politiche per l\'occupazione giovanile' },
-      { id: 'welfare', label: 'Rafforzamento del welfare sociale' }
-    ]
-  },
-  'altro': {
-    title: 'Altro argomento',
-    topics: []
-  }
-};
+let themesConfig = null;
+let emailTemplates = null;
 
 /**
  * Initialize composer functionality
  */
-export function initComposer() {
+export async function initComposer() {
+  await loadThemesConfig();
   setupComposerListeners();
+}
+
+/**
+ * Load themes configuration from API
+ */
+async function loadThemesConfig() {
+  try {
+    const response = await loadThemes();
+    if (response.success) {
+      themesConfig = response.themes;
+      emailTemplates = response.templates;
+      console.log(`✅ Loaded ${Object.keys(themesConfig).length} themes (v${response.version})`);
+    } else {
+      console.error('❌ Failed to load themes configuration:', response.error);
+      // Use fallback themes
+      themesConfig = {
+        altro: {
+          title: 'Altro argomento',
+          description: 'Per argomenti generici',
+          topics: []
+        }
+      };
+      emailTemplates = {
+        subject: 'Richiesta da cittadino di {comune}: {tema}',
+        body: {
+          greeting: 'Gentile {titolo} {cognome},',
+          introduction: 'Le scrivo come cittadino di {comune} in merito a {tema}.',
+          topics_header: 'Punti principali:',
+          closing: 'Cordiali saluti,\n[Firma opzionale]'
+        }
+      };
+    }
+  } catch (error) {
+    console.error('❌ Error loading themes configuration:', error);
+    // Use minimal fallback
+    themesConfig = {
+      altro: {
+        title: 'Altro argomento',
+        topics: []
+      }
+    };
+    emailTemplates = {
+      subject: 'Richiesta da cittadino di {comune}: {tema}',
+      body: {
+        greeting: 'Gentile {titolo} {cognome},',
+        introduction: 'Le scrivo come cittadino di {comune} in merito a {tema}.',
+        topics_header: 'Punti principali:',
+        closing: 'Cordiali saluti,\n[Firma opzionale]'
+      }
+    };
+  }
 }
 
 /**
@@ -142,14 +151,17 @@ function getRoleText(institution) {
  */
 function setupThemeDropdown() {
   const themeSelect = document.getElementById('themeSelect');
-  if (!themeSelect) return;
+  if (!themeSelect || !themesConfig) return;
   
   themeSelect.innerHTML = '<option value="">Seleziona un tema...</option>';
   
-  Object.entries(THEMES_AND_TOPICS).forEach(([key, theme]) => {
+  Object.entries(themesConfig).forEach(([key, theme]) => {
     const option = document.createElement('option');
     option.value = key;
     option.textContent = theme.title;
+    if (theme.description) {
+      option.title = theme.description; // Tooltip
+    }
     themeSelect.appendChild(option);
   });
 }
@@ -249,8 +261,8 @@ function updateTopicsDisplay(selectedTheme) {
     return;
   }
   
-  const theme = THEMES_AND_TOPICS[selectedTheme];
-  if (!theme || !theme.topics.length) {
+  const theme = themesConfig[selectedTheme];
+  if (!theme || !theme.topics || !theme.topics.length) {
     topicsContainer.style.display = 'none';
     return;
   }
@@ -290,10 +302,15 @@ function updateSubject() {
     return;
   }
   
-  const theme = THEMES_AND_TOPICS[themeSelect.value];
+  const theme = themesConfig[themeSelect.value];
   const comune = location?.comune || '[Comune]';
   
-  subjectInput.value = `Richiesta da cittadino di ${comune}: ${theme.title}`;
+  // Use template from configuration
+  let subjectTemplate = emailTemplates?.subject || 'Richiesta da cittadino di {comune}: {tema}';
+  subjectTemplate = subjectTemplate.replace('{comune}', comune);
+  subjectTemplate = subjectTemplate.replace('{tema}', theme.title);
+  
+  subjectInput.value = subjectTemplate;
 }
 
 /**
@@ -309,24 +326,45 @@ function updateBody() {
     return;
   }
   
-  const theme = THEMES_AND_TOPICS[themeSelect.value];
+  const theme = themesConfig[themeSelect.value];
   const comune = location?.comune || '[Comune]';
   const titolo = getTitleForRecipient(currentRecipient);
   
-  let body = `Gentile ${titolo} ${currentRecipient.cognome},\n\n`;
-  body += `Le scrivo come cittadino di ${comune} in merito a ${theme.title}.\n\n`;
+  // Use templates from configuration
+  const bodyTemplates = emailTemplates?.body || {
+    greeting: 'Gentile {titolo} {cognome},',
+    introduction: 'Le scrivo come cittadino di {comune} in merito a {tema}.',
+    topics_header: 'Punti principali:',
+    closing: 'Cordiali saluti,\n[Firma opzionale]'
+  };
+  
+  let body = '';
+  
+  // Greeting
+  let greeting = bodyTemplates.greeting || 'Gentile {titolo} {cognome},';
+  greeting = greeting.replace('{titolo}', titolo);
+  greeting = greeting.replace('{cognome}', currentRecipient.cognome);
+  body += greeting + '\n\n';
+  
+  // Introduction
+  let introduction = bodyTemplates.introduction || 'Le scrivo come cittadino di {comune} in merito a {tema}.';
+  introduction = introduction.replace('{comune}', comune);
+  introduction = introduction.replace('{tema}', theme.title);
+  body += introduction + '\n\n';
   
   // Add selected topics
   const selectedTopics = getSelectedTopics();
   if (selectedTopics.length > 0) {
-    body += `Punti principali:\n`;
+    const topicsHeader = bodyTemplates.topics_header || 'Punti principali:';
+    body += topicsHeader + '\n';
     selectedTopics.forEach(topic => {
       body += `- ${topic}\n`;
     });
-    body += `\n`;
+    body += '\n';
   }
   
-  body += `Cordiali saluti,\n[Firma opzionale]`;
+  // Closing
+  body += bodyTemplates.closing || 'Cordiali saluti,\n[Firma opzionale]';
   
   bodyTextarea.value = body;
 }

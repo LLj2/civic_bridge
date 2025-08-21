@@ -223,6 +223,54 @@ def create_app(config_name=None):
             logger.error(f"EU representatives error: {str(e)}")
             return jsonify({'success': False, 'error': 'Internal server error'}), 500
     
+    @app.route('/api/themes')
+    def get_themes():
+        """Get themes and topics configuration"""
+        try:
+            config_path = os.path.join(os.path.dirname(__file__), 'config', 'themes.json')
+            
+            if not os.path.exists(config_path):
+                # Fallback to hardcoded themes if config file doesn't exist
+                logger.warning(f"Themes config file not found at {config_path}, using fallback")
+                return jsonify({
+                    'success': True,
+                    'themes': {
+                        'altro': {
+                            'title': 'Altro argomento',
+                            'description': 'Per argomenti generici',
+                            'topics': []
+                        }
+                    },
+                    'templates': {
+                        'subject': 'Richiesta da cittadino di {comune}: {tema}',
+                        'body': {
+                            'greeting': 'Gentile {titolo} {cognome},',
+                            'introduction': 'Le scrivo come cittadino di {comune} in merito a {tema}.',
+                            'topics_header': 'Punti principali:',
+                            'closing': 'Cordiali saluti,\n[Firma opzionale]'
+                        }
+                    },
+                    'version': 'fallback'
+                })
+            
+            with open(config_path, 'r', encoding='utf-8') as f:
+                config = json.load(f)
+                
+            return jsonify({
+                'success': True,
+                'themes': config.get('themes', {}),
+                'templates': config.get('templates', {}),
+                'version': config.get('version', 'unknown'),
+                'updated': config.get('updated', 'unknown')
+            })
+            
+        except Exception as e:
+            logger.error(f"Themes config error: {str(e)}")
+            return jsonify({
+                'success': False,
+                'error': 'Failed to load themes configuration'
+            }), 500
+    
     return app
 
 # Create app instance
@@ -238,6 +286,7 @@ if __name__ == '__main__':
     print("  GET /api/representatives/camera - Get all deputies")
     print("  GET /api/representatives/senato - Get all senators")
     print("  GET /api/representatives/eu - Get all MEPs")
+    print("  GET /api/themes - Get themes and topics configuration")
     print("")
     print("Server starting on http://localhost:5000")
     

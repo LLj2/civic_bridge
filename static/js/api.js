@@ -26,11 +26,11 @@ export async function lookup(comune) {
 }
 
 /**
- * Load themes from static file
- * @returns {Promise<Object>} Themes data
+ * Load themes from API
+ * @returns {Promise<Object>} Themes configuration
  */
 export async function loadThemes() {
-  const response = await fetch('/static/themes.json');
+  const response = await fetch('/api/themes');
   const data = await response.json();
   return data;
 }

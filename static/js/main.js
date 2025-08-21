@@ -26,7 +26,7 @@ async function initApp() {
     setupSearchButton();
     
     // Initialize composer functionality
-    initComposer();
+    await initComposer();
     
     console.log('✅ Civic Bridge initialized successfully');
     

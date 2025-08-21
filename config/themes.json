@@ -1,0 +1,134 @@
+{
+  "version": "1.0",
+  "updated": "2025-01-28",
+  "templates": {
+    "subject": "Richiesta da un suo elettore di {comune}: {tema}",
+    "body": {
+      "greeting": "Gentile {titolo} {cognome},",
+      "introduction": "Mi rivolgo a Lei come cittadino residente a {comune}, per esprimere la mia grave preoccupazione in merito a {tema}.",
+      "topics_header": "In particolare, desidero sottolineare i seguenti punti:",
+      "closing": "Sono certo che terrà in considerazione la voce dei suoi elettori.\nLa ringrazio per l’attenzione e resto in attesa di un suo riscontro.\nCordiali saluti,\n[Firma opzionale]"
+    }
+  },
+  "themes": {
+  "guerra_palestina": {
+    "title": "Guerra in Palestina",
+    "description": "Richieste relative al conflitto israelo-palestinese",
+    "topics": [
+      {
+        "id": "cessate_fuoco",
+        "label": "Chiedere cessate il fuoco immediato",
+        "description": "Richiesta per un cessate il fuoco immediato e duraturo"
+      },
+      {
+        "id": "cordone_umanitario",
+        "label": "Apertura immediata cordone umanitario",
+        "description": "Consentire l’ingresso degli aiuti senza condizioni"
+      },
+      {
+        "id": "accesso_giornalisti",
+        "label": "Accesso sicuro ai giornalisti",
+        "description": "Garantire ai giornalisti l’accesso sicuro nella Striscia"
+      },
+      {
+        "id": "sanzioni_coloni",
+        "label": "Sanzioni mirate contro leader coloni",
+        "description": "Avviare sanzioni mirate contro i leader del movimento dei coloni"
+      },
+      {
+        "id": "sanzioni_governativi",
+        "label": "Sanzioni contro ufficiali governativi",
+        "description": "Introdurre sanzioni mirate contro gli ufficiali governativi responsabili"
+      },
+      {
+        "id": "export_militare",
+        "label": "Sospensione export militare",
+        "description": "Presentare interrogazioni/mozioni e verificare o sospendere l’export militare ai sensi della L. 185/1990"
+      }
+    ]
+  },
+    "politiche_migrazione": {
+      "title": "Politiche di migrazione",
+      "description": "Questioni relative alle politiche migratorie europee",
+      "topics": [
+        {
+          "id": "accoglienza",
+          "label": "Migliorare le politiche di accoglienza",
+          "description": "Riforma del sistema di accoglienza per rifugiati e migranti"
+        },
+        {
+          "id": "integrazione",
+          "label": "Sostegno all'integrazione",
+          "description": "Programmi per favorire l'integrazione sociale ed economica"
+        },
+        {
+          "id": "corridoi_umanitari",
+          "label": "Apertura di corridoi umanitari",
+          "description": "Creazione di vie sicure e legali per i rifugiati"
+        },
+        {
+          "id": "cooperazione_ue",
+          "label": "Cooperazione europea sulla migrazione",
+          "description": "Rafforzamento della collaborazione tra stati membri UE"
+        }
+      ]
+    },
+    "ambiente_clima": {
+      "title": "Ambiente e clima",
+      "description": "Politiche ambientali e cambiamento climatico",
+      "topics": [
+        {
+          "id": "green_deal",
+          "label": "Implementazione del Green Deal europeo",
+          "description": "Accelerare l'attuazione del piano climatico europeo"
+        },
+        {
+          "id": "energie_rinnovabili",
+          "label": "Investimenti in energie rinnovabili",
+          "description": "Incrementare gli investimenti in fonti energetiche sostenibili"
+        },
+        {
+          "id": "trasporti_sostenibili",
+          "label": "Promozione dei trasporti sostenibili",
+          "description": "Sviluppo di sistemi di trasporto a basse emissioni"
+        },
+        {
+          "id": "economia_circolare",
+          "label": "Sviluppo dell'economia circolare",
+          "description": "Transizione verso modelli economici sostenibili"
+        }
+      ]
+    },
+    "diritti_civili": {
+      "title": "Diritti civili e libertà",
+      "description": "Tutela dei diritti fondamentali e delle libertà civili",
+      "topics": [
+        {
+          "id": "parita_genere",
+          "label": "Parità di genere",
+          "description": "Promozione dell'uguaglianza tra uomini e donne"
+        },
+        {
+          "id": "diritti_lgbti",
+          "label": "Diritti delle persone LGBTI+",
+          "description": "Tutela dei diritti delle minoranze sessuali"
+        },
+        {
+          "id": "inclusione_disabilita",
+          "label": "Inclusione delle persone con disabilità",
+          "description": "Garantire pari opportunità per le persone con disabilità"
+        },
+        {
+          "id": "liberta_espressione",
+          "label": "Libertà di espressione",
+          "description": "Tutela della libertà di stampa e di espressione"
+        }
+      ]
+    },
+    "altro": {
+      "title": "Altro argomento",
+      "description": "Per argomenti non inclusi nelle altre categorie",
+      "topics": []
+    }
+  }
+}
