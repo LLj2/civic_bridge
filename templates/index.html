@@ -39,7 +39,7 @@
         <div class="composer-content">
             <div class="composer-header">
                 <h2 id="composerTitle" class="composer-title">Scrivi a [Nome Cognome]</h2>
-                <p id="composerSubtitle" class="composer-subtitle">Collegio: [label] · Partito: [sigla]</p>
+                <p id="composerSubtitle" class="composer-subtitle">Partito: [sigla] • Collegio: [label]<br>Email: [email]</p>
             </div>
             
             <div class="composer-body">
@@ -59,17 +59,8 @@
                 
                 <!-- Message Body -->
                 <div class="composer-field">
-                    <label class="composer-label" for="bodyTextarea">Testo del messaggio</label>
-                    <textarea id="bodyTextarea" class="composer-textarea" readonly></textarea>
-                </div>
-                
-                <!-- Personal Line (Required) -->
-                <div class="composer-field">
-                    <label class="composer-label required" for="personalLine">Riga personale (obbligatoria)</label>
-                    <textarea id="personalLine" class="composer-textarea composer-personal" 
-                            placeholder="Aggiungi qui le tue considerazioni personali (minimo 20 caratteri)..." 
-                            required minlength="20"></textarea>
-                    <div id="personalCounter" class="char-counter">0 / 300 caratteri</div>
+                    <label class="composer-label required" for="bodyTextarea">Messaggio</label>
+                    <textarea id="bodyTextarea" class="composer-textarea" rows="8"></textarea>
                 </div>
                 
                 <!-- Send Method -->
@@ -78,11 +69,11 @@
                     <div class="radio-group">
                         <div class="radio-option">
                             <input type="radio" id="sendMailto" name="sendMethod" value="mailto" checked>
-                            <label for="sendMailto">Apri nel mio client email</label>
+                            <label for="sendMailto">Apri nel mio client email (Outlook, Gmail...)</label>
                         </div>
                         <div class="radio-option">
                             <input type="radio" id="sendOAuth" name="sendMethod" value="oauth">
-                            <label for="sendOAuth">Invia come me (Gmail/Outlook)</label>
+                            <label for="sendOAuth">Invia tramite Civic Bridge (OAuth Gmail/Outlook)</label>
                         </div>
                     </div>
                 </div>
@@ -91,63 +82,16 @@
             <div class="composer-footer">
                 <div class="footer-note">Non salviamo il testo della tua email.</div>
                 <div class="footer-buttons">
+                    <button type="button" class="btn-secondary" id="copyTextBtn">Copia testo</button>
                     <button type="button" class="btn-secondary" id="closeComposerBtn">Annulla</button>
-                    <button type="button" id="sendButton" class="btn-primary" disabled>
-                        Invia
+                    <button type="button" id="sendButton" class="btn-primary">
+                        Apri email
                     </button>
                 </div>
             </div>
         </div>
     </div>
 
-    <!-- Composer Drawer -->
-    <div id="composerDrawer" class="composer-drawer is-hidden">
-        <div class="drawer-content">
-            <div class="drawer-header">
-                <h3>Componi messaggio</h3>
-                <button class="drawer-close" id="closeDrawer">×</button>
-            </div>
-            
-            <div class="drawer-body">
-                <!-- Recipients -->
-                <div class="drawer-section">
-                    <label class="drawer-label">Destinatari:</label>
-                    <div id="recipientChips" class="recipient-chips"></div>
-                </div>
-                
-                <!-- Template -->
-                <div class="drawer-section">
-                    <label class="drawer-label" for="templateSelect">Modello:</label>
-                    <select id="templateSelect" class="drawer-select">
-                        <option value="">Seleziona un modello...</option>
-                        <option value="segnalazione">Segnalazione problema locale</option>
-                        <option value="richiesta_info">Richiesta informazioni</option>
-                        <option value="proposta_civica">Proposta civica</option>
-                    </select>
-                </div>
-                
-                <!-- Subject -->
-                <div class="drawer-section">
-                    <label class="drawer-label" for="drawerSubject">Oggetto:</label>
-                    <input type="text" id="drawerSubject" class="drawer-input" placeholder="Oggetto del messaggio">
-                </div>
-                
-                <!-- Body -->
-                <div class="drawer-section">
-                    <label class="drawer-label" for="drawerBody">Messaggio:</label>
-                    <textarea id="drawerBody" class="drawer-textarea" rows="6" placeholder="Scrivi il tuo messaggio..."></textarea>
-                </div>
-            </div>
-            
-            <div class="drawer-footer">
-                <div class="footer-hint">I destinatari senza email verranno esclusi automaticamente.</div>
-                <div class="footer-actions">
-                    <button id="copyTextBtn" class="btn-secondary">Copia testo</button>
-                    <button id="openEmailBtn" class="btn-primary">Apri email</button>
-                </div>
-            </div>
-        </div>
-    </div>
 
     <!-- JavaScript Assets -->
     {% if is_debug %}

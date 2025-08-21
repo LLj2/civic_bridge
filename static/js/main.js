@@ -4,11 +4,10 @@
  */
 
 import { setupAutocomplete, searchRepresentatives } from './search.js';
-import { setupComposerListeners } from './composer.js';
+import { initComposer } from './composer-new.js';
 import { loadThemes } from './api.js';
 import { setThemes } from './state.js';
 import { showNotification } from './utils.js';
-import { initDrawer } from './drawer.js';
 
 /**
  * Initialize the application
@@ -26,11 +25,8 @@ async function initApp() {
     // Setup search button
     setupSearchButton();
     
-    // Setup composer modal listeners
-    setupComposerListeners();
-    
-    // Initialize drawer functionality
-    initDrawer();
+    // Initialize composer functionality
+    initComposer();
     
     console.log('✅ Civic Bridge initialized successfully');
     

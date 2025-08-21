@@ -5,7 +5,7 @@
 
 import { getRepresentatives } from './state.js';
 import { getPartyCode, debounce } from './utils.js';
-import { toggleRecipient, openDrawerWithRecipient } from './drawer.js';
+import { openComposerModal } from './composer-new.js';
 
 /**
  * Create and setup live region for screen readers
@@ -186,17 +186,10 @@ function renderRepresentativeCard(rep, index, institution) {
         <div class="rep-contact">${rep.email || 'Nessuna email disponibile'}</div>
       </div>
       <div class="rep-actions">
-        <button class="btn-add" 
+        <button class="btn-contact-primary"
                 data-rep-index="${index}"
                 data-institution="${institution}"
-                aria-label="Aggiungi ${rep.nome} ${rep.cognome} ai destinatari"
-                ${isDisabled ? 'disabled aria-disabled="true"' : ''}>
-          Aggiungi
-        </button>
-        <button class="btn-contact-single"
-                data-rep-index="${index}"
-                data-institution="${institution}"
-                aria-label="Contatta direttamente ${rep.nome} ${rep.cognome}"
+                aria-label="Contatta ${rep.nome} ${rep.cognome}"
                 ${isDisabled ? 'disabled aria-disabled="true"' : ''}>
           Contatta
         </button>
@@ -210,23 +203,14 @@ function renderRepresentativeCard(rep, index, institution) {
  */
 function setupContactButtonListeners(container) {
   container.addEventListener('click', function(event) {
-    const addBtn = event.target.closest('.btn-add');
-    const contactBtn = event.target.closest('.btn-contact-single');
+    const contactBtn = event.target.closest('.btn-contact-primary');
     
-    if (addBtn && !addBtn.disabled) {
-      const repIndex = parseInt(addBtn.dataset.repIndex);
-      const institution = addBtn.dataset.institution;
-      const repId = `rep-${institution}-${repIndex}`;
-      
-      // Toggle recipient selection
-      toggleRecipient(repId, repIndex, institution);
-      
-    } else if (contactBtn && !contactBtn.disabled) {
+    if (contactBtn && !contactBtn.disabled) {
       const repIndex = parseInt(contactBtn.dataset.repIndex);
       const institution = contactBtn.dataset.institution;
       
-      // Open drawer with this specific recipient
-      openDrawerWithRecipient(repIndex, institution);
+      // Open composer modal with this specific recipient
+      openComposerModal(repIndex, institution);
     }
   });
 }
