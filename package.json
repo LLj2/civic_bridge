@@ -1,0 +1,28 @@
+{
+  "name": "civic-bridge",
+  "version": "1.0.0",
+  "description": "Italian civic engagement platform - find and contact your representatives",
+  "main": "api_server.py",
+  "scripts": {
+    "lint": "eslint static/js/**/*.js",
+    "lint:fix": "eslint static/js/**/*.js --fix",
+    "format": "prettier --write static/js/**/*.js static/css/**/*.css templates/**/*.html",
+    "test": "npm run lint && python -m pytest tests/ -v",
+    "dev": "python api_server.py"
+  },
+  "keywords": [
+    "civic",
+    "democracy",
+    "italy",
+    "representatives",
+    "political-engagement"
+  ],
+  "author": "Civic Bridge Team",
+  "license": "MIT",
+  "devDependencies": {
+    "eslint": "^8.57.0",
+    "@eslint/js": "^9.0.0",
+    "prettier": "^3.2.0"
+  },
+  "type": "module"
+}

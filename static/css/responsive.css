@@ -1,0 +1,97 @@
+/* Responsive design for mobile devices */
+
+@media (max-width: 768px) {
+    body {
+        padding: 10px;
+    }
+    
+    .header {
+        padding: 20px;
+        margin-bottom: 20px;
+    }
+    
+    .header h1 {
+        font-size: 24px;
+    }
+    
+    .search-box {
+        padding: 20px;
+        margin-bottom: 20px;
+    }
+    
+    .composer-modal.show {
+        padding: 10px;
+    }
+    
+    .composer-content {
+        margin-top: 20px;
+    }
+    
+    .composer-header {
+        padding: 20px 20px 16px 20px;
+    }
+    
+    .composer-body {
+        padding: 20px;
+    }
+    
+    .composer-footer {
+        padding: 16px 20px 20px 20px;
+        flex-direction: column;
+        align-items: stretch;
+    }
+    
+    .footer-buttons {
+        width: 100%;
+    }
+    
+    .footer-buttons button {
+        flex: 1;
+    }
+    
+    .institution-header {
+        padding: 15px;
+    }
+    
+    .institution-title {
+        font-size: 18px;
+    }
+    
+    .institution-representatives {
+        padding: 15px;
+    }
+    
+    .representative {
+        flex-direction: column;
+        align-items: stretch;
+        gap: 12px;
+    }
+    
+    .rep-contact-btn {
+        align-self: stretch;
+        text-align: center;
+        margin-top: 8px;
+    }
+}
+
+@media (max-width: 480px) {
+    .composer-content {
+        width: calc(100vw - 20px);
+    }
+    
+    .footer-buttons {
+        flex-direction: column;
+    }
+    
+    .rep-name {
+        font-size: 14px;
+    }
+    
+    .rep-details {
+        font-size: 12px;
+    }
+    
+    .rep-collegio {
+        font-size: 11px;
+    }
+}

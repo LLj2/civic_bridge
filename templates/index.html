@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Civic Bridge - Trova i tuoi rappresentanti</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/main.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/components.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/responsive.css') }}">
+</head>
+<body>
+    <div class="header">
+        <h1>🇮🇹 Civic Bridge</h1>
+        <p>Trova i tuoi rappresentanti eletti per Comune</p>
+    </div>
+    
+    <div class="search-box">
+        <div class="autocomplete-container">
+            <input type="text" id="searchInput" placeholder="Inizia a scrivere il nome del comune (es. Roma, Milano...)">
+            <div id="autocompleteList" class="autocomplete-list"></div>
+        </div>
+        <button id="searchButton">Cerca i miei rappresentanti</button>
+    </div>
+    
+    <div id="results" class="results" style="display: none;">
+        <div id="resultsContent"></div>
+    </div>
+    
+    <!-- Message Composer Modal -->
+    <div id="composerModal" class="composer-modal">
+        <div class="composer-content">
+            <div class="composer-header">
+                <h2 id="composerTitle" class="composer-title">Scrivi a [Nome Cognome]</h2>
+                <p id="composerSubtitle" class="composer-subtitle">Collegio: [label] · Partito: [sigla]</p>
+            </div>
+            
+            <div class="composer-body">
+                <!-- Theme Selection -->
+                <div class="composer-field">
+                    <label class="composer-label required" for="themeSelect">Tema</label>
+                    <select id="themeSelect" class="composer-select" required>
+                        <option value="">Seleziona un tema...</option>
+                    </select>
+                </div>
+                
+                <!-- Subject -->
+                <div class="composer-field">
+                    <label class="composer-label required" for="subjectInput">Oggetto</label>
+                    <input type="text" id="subjectInput" class="composer-input" required>
+                </div>
+                
+                <!-- Message Body -->
+                <div class="composer-field">
+                    <label class="composer-label" for="bodyTextarea">Testo del messaggio</label>
+                    <textarea id="bodyTextarea" class="composer-textarea" readonly></textarea>
+                </div>
+                
+                <!-- Personal Line (Required) -->
+                <div class="composer-field">
+                    <label class="composer-label required" for="personalLine">Riga personale (obbligatoria)</label>
+                    <textarea id="personalLine" class="composer-textarea composer-personal" 
+                            placeholder="Aggiungi qui le tue considerazioni personali (minimo 20 caratteri)..." 
+                            required minlength="20"></textarea>
+                    <div id="personalCounter" class="char-counter">0 / 300 caratteri</div>
+                </div>
+                
+                <!-- Send Method -->
+                <div class="composer-field send-method">
+                    <label class="composer-label">Metodo di invio</label>
+                    <div class="radio-group">
+                        <div class="radio-option">
+                            <input type="radio" id="sendMailto" name="sendMethod" value="mailto" checked>
+                            <label for="sendMailto">Apri nel mio client email</label>
+                        </div>
+                        <div class="radio-option">
+                            <input type="radio" id="sendOAuth" name="sendMethod" value="oauth">
+                            <label for="sendOAuth">Invia come me (Gmail/Outlook)</label>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="composer-footer">
+                <div class="footer-note">Non salviamo il testo della tua email.</div>
+                <div class="footer-buttons">
+                    <button type="button" class="btn-secondary" id="closeComposerBtn">Annulla</button>
+                    <button type="button" id="sendButton" class="btn-primary" disabled>
+                        Invia
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ES Modules -->
+    <script type="module" src="{{ url_for('static', filename='js/main.js') }}"></script>
+</body>
+</html>
