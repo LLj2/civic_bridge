@@ -8,6 +8,7 @@ import { setupComposerListeners } from './composer.js';
 import { loadThemes } from './api.js';
 import { setThemes } from './state.js';
 import { showNotification } from './utils.js';
+import { initDrawer } from './drawer.js';
 
 /**
  * Initialize the application
@@ -27,6 +28,9 @@ async function initApp() {
     
     // Setup composer modal listeners
     setupComposerListeners();
+    
+    // Initialize drawer functionality
+    initDrawer();
     
     console.log('✅ Civic Bridge initialized successfully');
     

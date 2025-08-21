@@ -5,7 +5,7 @@
 
 import { getRepresentatives } from './state.js';
 import { getPartyCode, debounce } from './utils.js';
-import { openComposer } from './composer.js';
+import { toggleRecipient, openDrawerWithRecipient } from './drawer.js';
 
 /**
  * Display representatives results
@@ -15,82 +15,73 @@ export function displayResults(data) {
   const { location, representatives: reps, summary } = data;
   const contentDiv = document.getElementById('resultsContent');
   
-  let html = `<h2>📍 ${location.comune} (${location.provincia}) - ${location.regione}</h2>` +
-    `<p><strong>Totale rappresentanti trovati: ${summary.total_representatives}</strong></p>`;
-  
-  // Add filter buttons
-  html += `
-    <div class="filter-controls">
-      <div class="filter-group">
-        <label>Filtra per istituzione:</label>
-        <div class="filter-buttons">
-          <button class="filter-btn active" data-filter="all">Tutti (${summary.total_representatives})</button>
-          ${reps.camera && reps.camera.length > 0 ? 
-            `<button class="filter-btn" data-filter="camera">Camera (${summary.deputati_count})</button>` : ''}
-          ${reps.senato && reps.senato.length > 0 ? 
-            `<button class="filter-btn" data-filter="senato">Senato (${summary.senatori_count})</button>` : ''}
-          ${reps.eu_parliament && reps.eu_parliament.length > 0 ? 
-            `<button class="filter-btn" data-filter="eu">EU (${summary.mep_count})</button>` : ''}
-        </div>
-      </div>
-      
-      <div class="filter-group">
-        <label for="searchResults">Cerca rappresentanti:</label>
-        <input type="text" id="searchResults" class="search-results-input" 
-               placeholder="Nome, cognome, partito...">
-        <button class="btn-outline" id="clearSearchBtn">Pulisci</button>
-      </div>
+  // Result header
+  let html = `
+    <div class="result-header">
+      <h2 class="result-title">📍 ${location.comune} (${location.provincia}) – ${location.regione}</h2>
+      <p class="result-meta">Trovati ${summary.total_representatives} rappresentanti</p>
     </div>`;
   
-  // Add show/hide controls
+  // Institution tabs (segmented control)
   html += `
-    <div class="section-controls">
-      <div class="control-group">
-        <span class="control-label">Sezioni:</span>
-        <button class="btn-outline" id="expandAllBtn">Mostra tutto</button>
-        <button class="btn-outline" id="collapseAllBtn">Nascondi tutto</button>
-      </div>
-      <div class="control-group">
-        <span class="control-label">Selezione:</span>
-        <button class="btn-outline" id="selectAllBtn">Seleziona tutti</button>
-        <button class="btn-outline" id="deselectAllBtn">Deseleziona tutti</button>
-        <button class="btn-primary" id="contactSelectedBtn" disabled>Contatta selezionati (0)</button>
-      </div>
+    <div class="institution-tabs" role="tablist">
+      <button class="tab-btn active" data-institution="all" role="tab" aria-selected="true" id="tab-all">
+        Tutti <span class="tab-count">${summary.total_representatives}</span>
+      </button>
+      ${reps.camera && reps.camera.length > 0 ? 
+        `<button class="tab-btn" data-institution="camera" role="tab" aria-selected="false" id="tab-camera">
+          Camera <span class="tab-count">${summary.deputati_count}</span>
+        </button>` : ''}
+      ${reps.senato && reps.senato.length > 0 ? 
+        `<button class="tab-btn" data-institution="senato" role="tab" aria-selected="false" id="tab-senato">
+          Senato <span class="tab-count">${summary.senatori_count}</span>
+        </button>` : ''}
+      ${reps.eu_parliament && reps.eu_parliament.length > 0 ? 
+        `<button class="tab-btn" data-institution="eu" role="tab" aria-selected="false" id="tab-eu">
+          Parlamento Europeo <span class="tab-count">${summary.mep_count}</span>
+        </button>` : ''}
     </div>`;
   
-  // Camera dei Deputati
+  // In-results search (above list)
+  html += `
+    <div class="search-within-results">
+      <input type="text" id="searchResults" class="search-within-input" 
+             placeholder="Filtra per nome, partito o collegio…">
+    </div>`;
+  
+  // Representative list container (all reps, filtered by active tab)
+  html += `<div class="representative-list" role="tabpanel" id="rep-list">`;
+  
+  // Add all representatives (tabs will filter them)
   if (reps.camera && reps.camera.length > 0) {
-    html += renderInstitutionSection('camera', 'Camera dei Deputati', '🏛️', reps.camera, summary.deputati_count);
+    reps.camera.forEach((rep, index) => {
+      html += renderRepresentativeCard(rep, index, 'camera');
+    });
   }
   
-  // Senato della Repubblica
   if (reps.senato && reps.senato.length > 0) {
-    html += renderInstitutionSection('senato', 'Senato della Repubblica', '🏛️', reps.senato, summary.senatori_count);
+    reps.senato.forEach((rep, index) => {
+      html += renderRepresentativeCard(rep, index, 'senato');
+    });
   }
   
-  // Parlamento Europeo
   if (reps.eu_parliament && reps.eu_parliament.length > 0) {
-    html += renderInstitutionSection('eu', 'Parlamento Europeo', '🇪🇺', reps.eu_parliament, summary.mep_count);
+    reps.eu_parliament.forEach((rep, index) => {
+      html += renderRepresentativeCard(rep, index, 'eu');
+    });
   }
+  
+  html += `</div>`;
   
   contentDiv.innerHTML = html;
   
   // Setup event listeners for contact buttons (event delegation)
   setupContactButtonListeners(contentDiv);
   
-  // Setup section toggle listeners
-  setupSectionToggleListeners(contentDiv);
+  // Setup tab functionality
+  setupTabListeners(contentDiv);
   
-  // Setup show/hide all buttons
-  setupShowHideAllListeners(contentDiv);
-  
-  // Setup filter buttons
-  setupFilterListeners(contentDiv);
-  
-  // Setup selection functionality
-  setupSelectionListeners(contentDiv);
-  
-  // Setup search functionality
+  // Setup search functionality  
   setupSearchListeners(contentDiv);
 }
 
@@ -161,27 +152,27 @@ function renderRepresentativeCard(rep, index, institution) {
   const isDisabled = (!rep.email || rep.email === 'Non disponibile');
   
   return `
-    <div class="representative">
-      <div class="rep-selection">
-        <input type="checkbox" 
-               class="rep-checkbox" 
-               id="rep-${institution}-${index}"
-               data-rep-index="${index}"
-               data-institution="${institution}"
-               ${isDisabled ? 'disabled' : ''}>
-        <label for="rep-${institution}-${index}" class="checkbox-label"></label>
-      </div>
+    <div class="representative" data-institution="${institution}" data-rep-id="rep-${institution}-${index}">
       <div class="rep-info">
         <div class="rep-name">${rep.nome} ${rep.cognome}</div>
-        <div class="rep-details">${roleText} · ${partyCode}</div>
-        <div class="rep-collegio">${locationInfo}</div>
+        <div class="rep-details">${roleText} • ${partyCode}</div>
+        <div class="rep-location">${locationInfo}</div>
+        <div class="rep-contact">${rep.email || 'Nessuna email disponibile'}</div>
       </div>
-      <button class="rep-contact-btn"
-              data-rep-index="${index}"
-              data-institution="${institution}"
-              ${isDisabled ? 'disabled' : ''}>
-        Contatta
-      </button>
+      <div class="rep-actions">
+        <button class="btn-add" 
+                data-rep-index="${index}"
+                data-institution="${institution}"
+                ${isDisabled ? 'disabled' : ''}>
+          Aggiungi
+        </button>
+        <button class="btn-contact-single"
+                data-rep-index="${index}"
+                data-institution="${institution}"
+                ${isDisabled ? 'disabled' : ''}>
+          Contatta
+        </button>
+      </div>
     </div>`;
 }
 
@@ -191,14 +182,24 @@ function renderRepresentativeCard(rep, index, institution) {
  */
 function setupContactButtonListeners(container) {
   container.addEventListener('click', function(event) {
-    const button = event.target.closest('.rep-contact-btn');
-    if (!button || button.disabled) return;
+    const addBtn = event.target.closest('.btn-add');
+    const contactBtn = event.target.closest('.btn-contact-single');
     
-    const repIndex = parseInt(button.dataset.repIndex);
-    const institution = button.dataset.institution;
-    
-    // Open composer modal
-    openComposer(repIndex, institution);
+    if (addBtn && !addBtn.disabled) {
+      const repIndex = parseInt(addBtn.dataset.repIndex);
+      const institution = addBtn.dataset.institution;
+      const repId = `rep-${institution}-${repIndex}`;
+      
+      // Toggle recipient selection
+      toggleRecipient(repId, repIndex, institution);
+      
+    } else if (contactBtn && !contactBtn.disabled) {
+      const repIndex = parseInt(contactBtn.dataset.repIndex);
+      const institution = contactBtn.dataset.institution;
+      
+      // Open drawer with this specific recipient
+      openDrawerWithRecipient(repIndex, institution);
+    }
   });
 }
 
@@ -294,47 +295,47 @@ function collapseAllSections() {
 }
 
 /**
- * Setup filter button event listeners
+ * Setup tab button event listeners
  * @param {HTMLElement} container - Container element
  */
-function setupFilterListeners(container) {
-  const filterButtons = container.querySelectorAll('.filter-btn');
+function setupTabListeners(container) {
+  const tabButtons = container.querySelectorAll('.tab-btn');
   
-  filterButtons.forEach(button => {
+  tabButtons.forEach(button => {
     button.addEventListener('click', function() {
-      const filter = this.dataset.filter;
+      const institution = this.dataset.institution;
       
-      // Update active state
-      filterButtons.forEach(btn => btn.classList.remove('active'));
+      // Update active state and ARIA attributes
+      tabButtons.forEach(btn => {
+        btn.classList.remove('active');
+        btn.setAttribute('aria-selected', 'false');
+      });
       this.classList.add('active');
+      this.setAttribute('aria-selected', 'true');
       
-      // Apply filter
-      applyInstitutionFilter(filter);
+      // Apply tab filter
+      applyTabFilter(institution);
     });
   });
 }
 
 /**
- * Apply institution filter
- * @param {string} filter - Filter type ('all', 'camera', 'senato', 'eu')
+ * Apply tab filter
+ * @param {string} institution - Institution type ('all', 'camera', 'senato', 'eu')
  */
-function applyInstitutionFilter(filter) {
-  const sections = document.querySelectorAll('.institution-section');
+function applyTabFilter(institution) {
+  const representatives = document.querySelectorAll('.representative');
   
-  sections.forEach(section => {
-    const sectionId = section.id;
-    const isVisible = filter === 'all' || sectionId.includes(filter);
+  representatives.forEach(rep => {
+    const repInstitution = rep.dataset.institution;
+    const isVisible = institution === 'all' || repInstitution === institution;
     
     if (isVisible) {
-      section.classList.remove('hidden');
-      section.classList.add('visible');
-      // Expand visible sections
-      section.classList.remove('collapsed');
-      const icon = section.querySelector('.collapse-icon');
-      if (icon) icon.textContent = '▼';
+      rep.classList.remove('hidden');
+      rep.classList.add('visible');
     } else {
-      section.classList.add('hidden');
-      section.classList.remove('visible');
+      rep.classList.add('hidden');
+      rep.classList.remove('visible');
     }
   });
 }
@@ -421,7 +422,6 @@ function contactSelectedRepresentatives() {
  */
 function setupSearchListeners(container) {
   const searchInput = container.querySelector('#searchResults');
-  const clearBtn = container.querySelector('#clearSearchBtn');
   
   if (searchInput) {
     const debouncedSearch = debounce(performSearch, 300);
@@ -429,15 +429,6 @@ function setupSearchListeners(container) {
     searchInput.addEventListener('input', function() {
       const query = this.value.trim();
       debouncedSearch(query);
-    });
-  }
-  
-  if (clearBtn) {
-    clearBtn.addEventListener('click', function() {
-      if (searchInput) {
-        searchInput.value = '';
-        performSearch('');
-      }
     });
   }
 }
@@ -450,12 +441,10 @@ function performSearch(query) {
   const representatives = document.querySelectorAll('.representative');
   
   if (!query) {
-    // Show all representatives
-    representatives.forEach(rep => {
-      rep.classList.remove('hidden');
-      rep.classList.add('visible');
-    });
-    updateSectionVisibility();
+    // Re-apply current tab filter instead of showing all
+    const activeTab = document.querySelector('.tab-btn.active');
+    const institution = activeTab ? activeTab.dataset.institution : 'all';
+    applyTabFilter(institution);
     return;
   }
   
@@ -463,19 +452,25 @@ function performSearch(query) {
   
   representatives.forEach(rep => {
     const nameElement = rep.querySelector('.rep-name');
-    const detailsElement = rep.querySelector('.rep-details');
-    const collegioElement = rep.querySelector('.rep-collegio');
+    const detailsElement = rep.querySelector('.rep-details'); 
+    const locationElement = rep.querySelector('.rep-location');
     
-    if (nameElement && detailsElement && collegioElement) {
+    if (nameElement && detailsElement && locationElement) {
       const name = nameElement.textContent.toLowerCase();
       const details = detailsElement.textContent.toLowerCase();
-      const collegio = collegioElement.textContent.toLowerCase();
+      const location = locationElement.textContent.toLowerCase();
       
       const matches = name.includes(lowerQuery) || 
                      details.includes(lowerQuery) || 
-                     collegio.includes(lowerQuery);
+                     location.includes(lowerQuery);
       
-      if (matches) {
+      // Only show if matches search AND passes current tab filter
+      const activeTab = document.querySelector('.tab-btn.active');
+      const currentInstitution = activeTab ? activeTab.dataset.institution : 'all';
+      const repInstitution = rep.dataset.institution;
+      const passesTabFilter = currentInstitution === 'all' || repInstitution === currentInstitution;
+      
+      if (matches && passesTabFilter) {
         rep.classList.remove('hidden');
         rep.classList.add('visible');
       } else {
@@ -484,8 +479,6 @@ function performSearch(query) {
       }
     }
   });
-  
-  updateSectionVisibility();
 }
 
 /**

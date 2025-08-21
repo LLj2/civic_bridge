@@ -587,6 +587,9 @@ async function initApp() {
     // Setup composer modal listeners
     setupComposerListeners();
     
+    // Initialize drawer functionality
+    initDrawer();
+    
     console.log('✅ Civic Bridge initialized successfully');
     
   } catch (error) {

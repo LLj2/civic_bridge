@@ -92,6 +92,55 @@
         </div>
     </div>
 
+    <!-- Composer Drawer -->
+    <div id="composerDrawer" class="composer-drawer is-hidden">
+        <div class="drawer-content">
+            <div class="drawer-header">
+                <h3>Componi messaggio</h3>
+                <button class="drawer-close" id="closeDrawer">×</button>
+            </div>
+            
+            <div class="drawer-body">
+                <!-- Recipients -->
+                <div class="drawer-section">
+                    <label class="drawer-label">Destinatari:</label>
+                    <div id="recipientChips" class="recipient-chips"></div>
+                </div>
+                
+                <!-- Template -->
+                <div class="drawer-section">
+                    <label class="drawer-label" for="templateSelect">Modello:</label>
+                    <select id="templateSelect" class="drawer-select">
+                        <option value="">Seleziona un modello...</option>
+                        <option value="segnalazione">Segnalazione problema locale</option>
+                        <option value="richiesta_info">Richiesta informazioni</option>
+                        <option value="proposta_civica">Proposta civica</option>
+                    </select>
+                </div>
+                
+                <!-- Subject -->
+                <div class="drawer-section">
+                    <label class="drawer-label" for="drawerSubject">Oggetto:</label>
+                    <input type="text" id="drawerSubject" class="drawer-input" placeholder="Oggetto del messaggio">
+                </div>
+                
+                <!-- Body -->
+                <div class="drawer-section">
+                    <label class="drawer-label" for="drawerBody">Messaggio:</label>
+                    <textarea id="drawerBody" class="drawer-textarea" rows="6" placeholder="Scrivi il tuo messaggio..."></textarea>
+                </div>
+            </div>
+            
+            <div class="drawer-footer">
+                <div class="footer-hint">I destinatari senza email verranno esclusi automaticamente.</div>
+                <div class="footer-actions">
+                    <button id="copyTextBtn" class="btn-secondary">Copia testo</button>
+                    <button id="openEmailBtn" class="btn-primary">Apri email</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <!-- JavaScript Assets -->
     {% if is_debug %}
     <script type="module" src="{{ url_for('static', filename='js/main.js') }}"></script>
