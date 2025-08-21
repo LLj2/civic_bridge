@@ -7,6 +7,7 @@ import { getRepresentatives } from './state.js';
 
 // Drawer state
 let selectedRecipients = new Set();
+let lastFocusedElement = null;
 let templates = {
     segnalazione: {
         subject: "Segnalazione da cittadino di {COMUNE}",
@@ -158,6 +159,60 @@ function setupDrawerListeners() {
     if (emailBtn) {
         emailBtn.addEventListener('click', openEmail);
     }
+    
+    // Keyboard navigation for drawer
+    const drawer = document.getElementById('composerDrawer');
+    if (drawer) {
+        drawer.addEventListener('keydown', handleDrawerKeyboard);
+    }
+}
+
+/**
+ * Handle keyboard navigation in drawer
+ * @param {KeyboardEvent} e - Keyboard event
+ */
+function handleDrawerKeyboard(e) {
+    // Close drawer with Escape key
+    if (e.key === 'Escape') {
+        e.preventDefault();
+        closeDrawer();
+        return;
+    }
+    
+    // Focus management for tab key
+    if (e.key === 'Tab') {
+        const focusableElements = getFocusableElements();
+        const firstElement = focusableElements[0];
+        const lastElement = focusableElements[focusableElements.length - 1];
+        
+        if (e.shiftKey) {
+            if (document.activeElement === firstElement) {
+                e.preventDefault();
+                lastElement.focus();
+            }
+        } else {
+            if (document.activeElement === lastElement) {
+                e.preventDefault();
+                firstElement.focus();
+            }
+        }
+    }
+}
+
+/**
+ * Get focusable elements within drawer
+ * @returns {Array} Focusable elements
+ */
+function getFocusableElements() {
+    const drawer = document.getElementById('composerDrawer');
+    if (!drawer) return [];
+    
+    const selector = 'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])';
+    const elements = drawer.querySelectorAll(selector);
+    
+    return Array.from(elements).filter(el => {
+        return !el.disabled && el.offsetParent !== null;
+    });
 }
 
 /**
@@ -168,7 +223,17 @@ function updateDrawerVisibility() {
     if (!drawer) return;
     
     if (selectedRecipients.size > 0) {
+        // Store current focused element before opening drawer
+        lastFocusedElement = document.activeElement;
+        
         drawer.classList.remove('is-hidden');
+        // Focus first element when opening drawer
+        setTimeout(() => {
+            const firstFocusable = getFocusableElements()[0];
+            if (firstFocusable) {
+                firstFocusable.focus();
+            }
+        }, 100);
     } else {
         drawer.classList.add('is-hidden');
     }
@@ -378,9 +443,20 @@ function closeDrawer() {
     });
     
     // Clear form
-    document.getElementById('templateSelect').value = '';
-    document.getElementById('drawerSubject').value = '';
-    document.getElementById('drawerBody').value = '';
+    const templateSelect = document.getElementById('templateSelect');
+    const drawerSubject = document.getElementById('drawerSubject');
+    const drawerBody = document.getElementById('drawerBody');
+    
+    if (templateSelect) templateSelect.value = '';
+    if (drawerSubject) drawerSubject.value = '';
+    if (drawerBody) drawerBody.value = '';
+    
+    // Restore focus to last focused element
+    if (lastFocusedElement && lastFocusedElement.offsetParent !== null) {
+        setTimeout(() => {
+            lastFocusedElement.focus();
+        }, 100);
+    }
 }
 
 /**

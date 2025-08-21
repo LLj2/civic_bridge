@@ -102,15 +102,17 @@ def create_app(config_name=None):
         """Autocomplete endpoint for city names"""
         try:
             query = request.args.get('q', '').strip()
+            limit = int(request.args.get('limit', 1000))  # Return all matches by default
+            
             if len(query) < 2:
                 return jsonify({'success': False, 'error': 'Query too short'})
             
             system = init_lookup()
             
-            # Simple autocomplete implementation
+            # Autocomplete implementation - return all matching comuni up to limit
             matching_comuni = system._comuni_cache[
                 system._comuni_cache['comune'].str.contains(query, case=False, na=False)
-            ].head(10)
+            ].head(limit)
             
             results = []
             for _, row in matching_comuni.iterrows():

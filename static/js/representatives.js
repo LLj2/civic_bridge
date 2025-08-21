@@ -8,6 +8,32 @@ import { getPartyCode, debounce } from './utils.js';
 import { toggleRecipient, openDrawerWithRecipient } from './drawer.js';
 
 /**
+ * Create and setup live region for screen readers
+ */
+function setupLiveRegion() {
+  let liveRegion = document.getElementById('liveRegion');
+  if (!liveRegion) {
+    liveRegion = document.createElement('div');
+    liveRegion.id = 'liveRegion';
+    liveRegion.setAttribute('aria-live', 'polite');
+    liveRegion.setAttribute('aria-atomic', 'true');
+    liveRegion.className = 'sr-only';
+    liveRegion.style.cssText = 'position: absolute; left: -10000px; width: 1px; height: 1px; overflow: hidden;';
+    document.body.appendChild(liveRegion);
+  }
+  return liveRegion;
+}
+
+/**
+ * Announce message to screen readers
+ * @param {string} message - Message to announce
+ */
+function announceToScreenReader(message) {
+  const liveRegion = setupLiveRegion();
+  liveRegion.textContent = message;
+}
+
+/**
  * Display representatives results
  * @param {Object} data - API response data
  */
@@ -152,9 +178,9 @@ function renderRepresentativeCard(rep, index, institution) {
   const isDisabled = (!rep.email || rep.email === 'Non disponibile');
   
   return `
-    <div class="representative" data-institution="${institution}" data-rep-id="rep-${institution}-${index}">
+    <div class="representative" data-institution="${institution}" data-rep-id="rep-${institution}-${index}" role="article" aria-labelledby="rep-name-${institution}-${index}">
       <div class="rep-info">
-        <div class="rep-name">${rep.nome} ${rep.cognome}</div>
+        <div id="rep-name-${institution}-${index}" class="rep-name">${rep.nome} ${rep.cognome}</div>
         <div class="rep-details">${roleText} • ${partyCode}</div>
         <div class="rep-location">${locationInfo}</div>
         <div class="rep-contact">${rep.email || 'Nessuna email disponibile'}</div>
@@ -163,13 +189,15 @@ function renderRepresentativeCard(rep, index, institution) {
         <button class="btn-add" 
                 data-rep-index="${index}"
                 data-institution="${institution}"
-                ${isDisabled ? 'disabled' : ''}>
+                aria-label="Aggiungi ${rep.nome} ${rep.cognome} ai destinatari"
+                ${isDisabled ? 'disabled aria-disabled="true"' : ''}>
           Aggiungi
         </button>
         <button class="btn-contact-single"
                 data-rep-index="${index}"
                 data-institution="${institution}"
-                ${isDisabled ? 'disabled' : ''}>
+                aria-label="Contatta direttamente ${rep.nome} ${rep.cognome}"
+                ${isDisabled ? 'disabled aria-disabled="true"' : ''}>
           Contatta
         </button>
       </div>
@@ -316,6 +344,37 @@ function setupTabListeners(container) {
       // Apply tab filter
       applyTabFilter(institution);
     });
+    
+    // Keyboard navigation support
+    button.addEventListener('keydown', function(e) {
+      const buttons = Array.from(tabButtons);
+      const currentIndex = buttons.indexOf(this);
+      let targetIndex = -1;
+      
+      switch(e.key) {
+        case 'ArrowLeft':
+          e.preventDefault();
+          targetIndex = currentIndex > 0 ? currentIndex - 1 : buttons.length - 1;
+          break;
+        case 'ArrowRight':
+          e.preventDefault();
+          targetIndex = currentIndex < buttons.length - 1 ? currentIndex + 1 : 0;
+          break;
+        case 'Home':
+          e.preventDefault();
+          targetIndex = 0;
+          break;
+        case 'End':
+          e.preventDefault();
+          targetIndex = buttons.length - 1;
+          break;
+      }
+      
+      if (targetIndex >= 0) {
+        buttons[targetIndex].focus();
+        buttons[targetIndex].click();
+      }
+    });
   });
 }
 
@@ -325,6 +384,7 @@ function setupTabListeners(container) {
  */
 function applyTabFilter(institution) {
   const representatives = document.querySelectorAll('.representative');
+  let visibleCount = 0;
   
   representatives.forEach(rep => {
     const repInstitution = rep.dataset.institution;
@@ -333,11 +393,95 @@ function applyTabFilter(institution) {
     if (isVisible) {
       rep.classList.remove('hidden');
       rep.classList.add('visible');
+      visibleCount++;
     } else {
       rep.classList.add('hidden');
       rep.classList.remove('visible');
     }
   });
+  
+  // Check for empty state
+  updateEmptyState(institution);
+  
+  // Announce filter change to screen readers
+  const institutionNames = {
+    all: 'tutti i rappresentanti',
+    camera: 'deputati della Camera',
+    senato: 'senatori del Senato', 
+    eu: 'eurodeputati'
+  };
+  
+  const institutionName = institutionNames[institution] || institution;
+  announceToScreenReader(`Filtro applicato: mostrati ${visibleCount} ${institutionName}`);
+}
+
+/**
+ * Update empty state display
+ * @param {string} institution - Current active institution
+ */
+function updateEmptyState(institution) {
+  const visibleReps = document.querySelectorAll('.representative.visible:not(.hidden)');
+  const listContainer = document.getElementById('rep-list');
+  
+  // Remove existing empty state
+  const existingEmptyState = document.querySelector('.empty-state');
+  if (existingEmptyState) {
+    existingEmptyState.remove();
+  }
+  
+  if (visibleReps.length === 0) {
+    const emptyState = createEmptyState(institution);
+    listContainer.appendChild(emptyState);
+  }
+}
+
+/**
+ * Create empty state element
+ * @param {string} institution - Institution type
+ * @returns {HTMLElement} Empty state element
+ */
+function createEmptyState(institution) {
+  const emptyState = document.createElement('div');
+  emptyState.className = 'empty-state';
+  
+  let message = '';
+  let icon = '🔍';
+  
+  const searchInput = document.getElementById('searchResults');
+  const hasSearchQuery = searchInput && searchInput.value.trim();
+  
+  if (hasSearchQuery) {
+    message = `Nessun rappresentante trovato per "${searchInput.value.trim()}"`;
+    icon = '🔍';
+  } else {
+    switch (institution) {
+      case 'camera':
+        message = 'Nessun deputato trovato per questo Comune.';
+        icon = '🏛️';
+        break;
+      case 'senato':
+        message = 'Nessun senatore trovato per questo Comune.';
+        icon = '🏛️';
+        break;
+      case 'eu':
+        message = 'Nessun eurodeputato trovato per questo Comune.';
+        icon = '🇪🇺';
+        break;
+      default:
+        message = 'Nessun rappresentante trovato per questo Comune.';
+        icon = '📭';
+    }
+  }
+  
+  emptyState.innerHTML = `
+    <div class="empty-state-content">
+      <div class="empty-state-icon">${icon}</div>
+      <div class="empty-state-message">${message}</div>
+      ${hasSearchQuery ? '<div class="empty-state-hint">Prova a cercare con termini diversi o seleziona un\'altra istituzione.</div>' : ''}
+    </div>
+  `;
+  
+  return emptyState;
 }
 
 /**
@@ -479,6 +623,11 @@ function performSearch(query) {
       }
     }
   });
+  
+  // Update empty state after search
+  const activeTab = document.querySelector('.tab-btn.active');
+  const institution = activeTab ? activeTab.dataset.institution : 'all';
+  updateEmptyState(institution);
 }
 
 /**

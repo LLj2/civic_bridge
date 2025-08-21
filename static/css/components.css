@@ -1,5 +1,18 @@
 /* Component styles: cards, modals, forms, notifications */
 
+/* Screen reader only content */
+.sr-only {
+    position: absolute !important;
+    width: 1px !important;
+    height: 1px !important;
+    padding: 0 !important;
+    margin: -1px !important;
+    overflow: hidden !important;
+    clip: rect(0, 0, 0, 0) !important;
+    white-space: nowrap !important;
+    border: 0 !important;
+}
+
 /* Representative List */
 .representative-list {
     margin: 20px 0;
@@ -160,12 +173,22 @@
     transform: translateY(-1px);
 }
 
+.btn-add:focus {
+    outline: 2px solid #667eea;
+    outline-offset: 2px;
+}
+
 .btn-add.selected {
     background: #38a169;
 }
 
 .btn-add.selected:hover {
     background: #2f855a;
+}
+
+.btn-add.selected:focus {
+    outline: 2px solid #38a169;
+    outline-offset: 2px;
 }
 
 .btn-contact-single {
@@ -177,6 +200,11 @@
 .btn-contact-single:hover {
     background: #667eea;
     color: white;
+}
+
+.btn-contact-single:focus {
+    outline: 2px solid #667eea;
+    outline-offset: 2px;
 }
 
 .btn-add:disabled,
@@ -269,6 +297,11 @@
 .tab-btn:hover {
     background: rgba(102, 126, 234, 0.1);
     color: #667eea;
+}
+
+.tab-btn:focus {
+    outline: 2px solid #667eea;
+    outline-offset: 2px;
 }
 
 .tab-btn.active {
@@ -518,6 +551,11 @@
     background: #cbd5e1;
 }
 
+.btn-secondary:focus {
+    outline: 2px solid #667eea;
+    outline-offset: 2px;
+}
+
 .btn-primary {
     background: #667eea;
     color: white;
@@ -526,6 +564,11 @@
 .btn-primary:hover {
     background: #5a67d8;
     transform: translateY(-1px);
+}
+
+.btn-primary:focus {
+    outline: 2px solid #667eea;
+    outline-offset: 2px;
 }
 
 .btn-primary:disabled {
@@ -562,6 +605,82 @@
         transform: translateX(0);
         opacity: 1;
     }
+}
+
+/* Empty States */
+.empty-state {
+    padding: 60px 20px;
+    text-align: center;
+}
+
+.empty-state-content {
+    max-width: 400px;
+    margin: 0 auto;
+}
+
+.empty-state-icon {
+    font-size: 48px;
+    margin-bottom: 16px;
+    opacity: 0.7;
+}
+
+.empty-state-message {
+    font-size: 16px;
+    color: #4a5568;
+    margin-bottom: 8px;
+    font-weight: 500;
+}
+
+.empty-state-hint {
+    font-size: 14px;
+    color: #718096;
+    margin-top: 8px;
+}
+
+/* Error States */
+.error-state {
+    padding: 60px 20px;
+    text-align: center;
+}
+
+.error-state-content {
+    max-width: 400px;
+    margin: 0 auto;
+}
+
+.error-state-icon {
+    font-size: 48px;
+    margin-bottom: 16px;
+}
+
+.error-state-title {
+    font-size: 20px;
+    font-weight: 600;
+    color: #1a202c;
+    margin-bottom: 12px;
+}
+
+.error-state-message {
+    font-size: 16px;
+    color: #4a5568;
+    margin-bottom: 20px;
+    line-height: 1.5;
+}
+
+.error-state-message small {
+    font-size: 12px;
+    color: #718096;
+}
+
+.retry-btn {
+    margin-top: 16px;
+    padding: 12px 24px;
+    border: none;
+    border-radius: 8px;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s ease;
 }
 
 /* Section Controls */

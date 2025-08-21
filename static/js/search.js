@@ -83,16 +83,21 @@ async function fetchAutocomplete(query) {
  */
 function showAutocompleteResults(results) {
   const list = document.getElementById('autocompleteList');
+  const input = document.getElementById('searchInput');
+  
   list.innerHTML = '';
   
-  results.forEach(result => {
+  results.forEach((result, index) => {
     const item = document.createElement('div');
     item.className = 'autocomplete-item';
     item.textContent = result.display;
+    item.role = 'option';
+    item.id = `autocomplete-item-${index}`;
+    item.setAttribute('aria-selected', 'false');
     
     // Use event listener instead of onclick
     item.addEventListener('click', function() {
-      document.getElementById('searchInput').value = result.comune;
+      input.value = result.comune;
       selectedComune = result.comune;
       hideAutocomplete();
       searchRepresentatives();
@@ -102,6 +107,12 @@ function showAutocompleteResults(results) {
   });
   
   list.classList.add('is-visible');
+  
+  // Update ARIA attributes
+  input.setAttribute('aria-expanded', 'true');
+  if (results.length > 0) {
+    input.setAttribute('aria-activedescendant', 'autocomplete-item-0');
+  }
 }
 
 /**
@@ -109,8 +120,15 @@ function showAutocompleteResults(results) {
  */
 function hideAutocomplete() {
   const list = document.getElementById('autocompleteList');
+  const input = document.getElementById('searchInput');
+  
   if (list) {
     list.classList.remove('is-visible');
+  }
+  
+  if (input) {
+    input.setAttribute('aria-expanded', 'false');
+    input.removeAttribute('aria-activedescendant');
   }
 }
 
@@ -135,17 +153,118 @@ export async function searchRepresentatives() {
     const data = await lookup(query);
     
     if (data.success) {
+      // Check if no representatives found
+      if (!data.representatives || Object.keys(data.representatives).length === 0) {
+        displayNoResultsState(query, data.location);
+        return;
+      }
+      
       // Update global state
       setRepresentatives(data.representatives);
       setLocation(data.location);
       
       // Display results
       displayResults(data);
+      
+      // Auto-scroll to results and focus first tab
+      scrollToResults();
     } else {
-      contentDiv.innerHTML = `<div class="error">Errore: ${data.error}</div>`;
+      displayErrorState(data.error || 'Errore sconosciuto', query);
     }
   } catch (error) {
     console.error('Search error:', error);
-    contentDiv.innerHTML = `<div class="error">Errore di connessione: ${error.message}</div>`;
+    displayNetworkErrorState(error.message, query);
+  }
+}
+
+/**
+ * Display no results state
+ * @param {string} query - Search query
+ * @param {Object} location - Location data
+ */
+function displayNoResultsState(query, location) {
+  const contentDiv = document.getElementById('resultsContent');
+  contentDiv.innerHTML = `
+    <div class="error-state">
+      <div class="error-state-content">
+        <div class="error-state-icon">📭</div>
+        <div class="error-state-title">Nessun rappresentante trovato</div>
+        <div class="error-state-message">
+          Non sono stati trovati rappresentanti per <strong>${query}</strong>.
+          ${location ? `<br>Verifica che il comune sia corretto.` : ''}
+        </div>
+        <button class="btn-secondary retry-btn" onclick="document.getElementById('searchInput').focus()">
+          Prova un altro comune
+        </button>
+      </div>
+    </div>
+  `;
+}
+
+/**
+ * Display error state
+ * @param {string} errorMessage - Error message
+ * @param {string} query - Search query
+ */
+function displayErrorState(errorMessage, query) {
+  const contentDiv = document.getElementById('resultsContent');
+  contentDiv.innerHTML = `
+    <div class="error-state">
+      <div class="error-state-content">
+        <div class="error-state-icon">⚠️</div>
+        <div class="error-state-title">Errore nella ricerca</div>
+        <div class="error-state-message">${errorMessage}</div>
+        <button class="btn-primary retry-btn" onclick="searchRepresentatives()">
+          Riprova
+        </button>
+      </div>
+    </div>
+  `;
+}
+
+/**
+ * Display network error state
+ * @param {string} errorMessage - Error message  
+ * @param {string} query - Search query
+ */
+function displayNetworkErrorState(errorMessage, query) {
+  const contentDiv = document.getElementById('resultsContent');
+  contentDiv.innerHTML = `
+    <div class="error-state">
+      <div class="error-state-content">
+        <div class="error-state-icon">🔌</div>
+        <div class="error-state-title">Impossibile caricare i rappresentanti</div>
+        <div class="error-state-message">
+          Verifica la connessione internet e riprova.
+          <br><small>Dettaglio errore: ${errorMessage}</small>
+        </div>
+        <button class="btn-primary retry-btn" onclick="searchRepresentatives()">
+          Riprova
+        </button>
+      </div>
+    </div>
+  `;
+}
+
+/**
+ * Scroll to results section and focus first tab for accessibility
+ */
+function scrollToResults() {
+  const resultsDiv = document.getElementById('results');
+  const firstTab = document.querySelector('.tab-btn');
+  
+  if (resultsDiv) {
+    // Smooth scroll to results
+    resultsDiv.scrollIntoView({ 
+      behavior: 'smooth', 
+      block: 'start' 
+    });
+    
+    // Focus first tab after a short delay
+    if (firstTab) {
+      setTimeout(() => {
+        firstTab.focus();
+      }, 500);
+    }
   }
 }

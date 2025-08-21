@@ -16,10 +16,18 @@
     
     <div class="search-box">
         <div class="autocomplete-container">
-            <input type="text" id="searchInput" placeholder="Inizia a scrivere il nome del comune (es. Roma, Milano...)">
-            <div id="autocompleteList" class="autocomplete-list"></div>
+            <label for="searchInput" class="sr-only">Cerca il tuo comune</label>
+            <input type="text" id="searchInput" 
+                   placeholder="Inizia a scrivere il nome del comune (es. Roma, Milano...)"
+                   aria-label="Cerca il tuo comune"
+                   aria-describedby="searchHelp"
+                   role="combobox"
+                   aria-expanded="false"
+                   aria-autocomplete="list">
+            <div id="autocompleteList" class="autocomplete-list" role="listbox" aria-label="Suggerimenti comuni"></div>
         </div>
-        <button id="searchButton">Cerca i miei rappresentanti</button>
+        <div id="searchHelp" class="sr-only">Digita il nome del tuo comune per trovare i tuoi rappresentanti eletti</div>
+        <button id="searchButton" aria-describedby="searchHelp">Cerca i miei rappresentanti</button>
     </div>
     
     <div id="results" class="results is-hidden">
