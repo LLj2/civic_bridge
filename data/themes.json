@@ -1,0 +1,99 @@
+{
+  "themes": [
+    {
+      "id": "corridoio_umanitario",
+      "title": "Corridoio umanitario",
+      "description": "Apertura immediata corridoio umanitario senza condizioni",
+      "templates": {
+        "camera": {
+          "subject": "Cittadino di {{location}} - Corridoio umanitario immediato per Gaza",
+          "body": "Onorevole Deputato {{rep_name}},\n\nLe scrivo come cittadino di {{location}} per sollecitare il Suo impegno parlamentare sull'apertura immediata di un corridoio umanitario per Gaza.\n\nChiedo specificamente:\n- Corridoio umanitario senza precondizioni\n- Accesso immediato per aiuti medici e viveri\n- Garanzie internazionali per la sicurezza degli operatori\n\n[RIGA PERSONALE OBBLIGATORIA]\n\nLa ringrazio per l'attenzione e confido nel Suo impegno.\n\nCordiali saluti,\n{{user_name}}\nCittadino di {{location}}"
+        },
+        "senato": {
+          "subject": "Cittadino di {{location}} - Corridoio umanitario per Gaza",
+          "body": "Onorevole Senatore {{rep_name}},\n\nMi rivolgo a Lei come cittadino di {{location}} per un'azione senatoriale urgente sul corridoio umanitario per Gaza.\n\nSollecito il Senato a:\n- Impegnare il Governo per corridoi umanitari immediati\n- Rimuovere le precondizioni che bloccano gli aiuti\n- Coordinare con partner europei per azione comune\n\n[RIGA PERSONALE OBBLIGATORIA]\n\nDistinti saluti,\n{{user_name}}\n{{location}}"
+        },
+        "eu": {
+          "subject": "Cittadino italiano - Corridoio umanitario UE per Gaza",
+          "body": "Onorevole Europarlamentare {{rep_name}},\n\nLe scrivo come cittadino italiano per sollecitare corridoi umanitari europei immediati verso Gaza.\n\nChiedo il Suo sostegno per:\n- Corridoi umanitari UE coordinati\n- Fondi emergenziali per aiuti diretti\n- Pressione diplomatica per accesso senza condizioni\n\n[RIGA PERSONALE OBBLIGATORIA]\n\nCordiali saluti,\n{{user_name}}\n{{location}}, Italia"
+        }
+      }
+    },
+    {
+      "id": "giornalisti_sicuri",
+      "title": "Accesso sicuro giornalisti",
+      "description": "Garantire accesso sicuro ai giornalisti nella Striscia",
+      "templates": {
+        "camera": {
+          "subject": "Cittadino di {{location}} - Protezione giornalisti a Gaza",
+          "body": "Onorevole Deputato {{rep_name}},\n\nLe scrivo come cittadino di {{location}} sulla protezione dei giornalisti a Gaza.\n\nChiedo il Suo impegno per:\n- Garantire accesso sicuro ai giornalisti nella Striscia\n- Protezione internazionale per operatori media\n- Condanna di attacchi contro la stampa\n\n[RIGA PERSONALE OBBLIGATORIA]\n\nLa ringrazio per l'attenzione.\n\nCordiali saluti,\n{{user_name}}\nCittadino di {{location}}"
+        },
+        "senato": {
+          "subject": "Cittadino di {{location}} - Libertà stampa Gaza",
+          "body": "Onorevole Senatore {{rep_name}},\n\nMi rivolgo a Lei come cittadino di {{location}} sulla libertà di stampa a Gaza.\n\nSollecito azione senatoriale per:\n- Protezione giornalisti nella Striscia di Gaza\n- Condanna parlamentare degli attacchi ai media\n- Supporto internazionale per libero accesso informativo\n\n[RIGA PERSONALE OBBLIGATORIA]\n\nDistinti saluti,\n{{user_name}}\n{{location}}"
+        },
+        "eu": {
+          "subject": "Cittadino italiano - Protezione giornalisti UE",
+          "body": "Onorevole Europarlamentare {{rep_name}},\n\nLe scrivo come cittadino italiano per la protezione dei giornalisti a Gaza.\n\nChiedo risoluzioni UE per:\n- Sicurezza giornalisti nell'area\n- Condanna europea attacchi contro media\n- Sostegno UE per libertà di informazione\n\n[RIGA PERSONALE OBBLIGATORIA]\n\nCordiali saluti,\n{{user_name}}\n{{location}}, Italia"
+        }
+      }
+    },
+    {
+      "id": "sanzioni_coloni",
+      "title": "Sanzioni contro coloni",
+      "description": "Sanzioni mirate contro leader movimento coloni",
+      "templates": {
+        "camera": {
+          "subject": "Cittadino di {{location}} - Sanzioni contro coloni israeliani",
+          "body": "Onorevole Deputato {{rep_name}},\n\nLe scrivo come cittadino di {{location}} sulle sanzioni contro i coloni israeliani.\n\nChiedo il Suo impegno per:\n- Sanzioni mirate contro leader coloni\n- Congelamento beni responsabili espansione\n- Divieti di ingresso in Italia per responsabili\n\n[RIGA PERSONALE OBBLIGATORIA]\n\nLa ringrazio per l'attenzione.\n\nCordiali saluti,\n{{user_name}}\nCittadino di {{location}}"
+        },
+        "senato": {
+          "subject": "Cittadino di {{location}} - Sanzioni mirate coloni",
+          "body": "Onorevole Senatore {{rep_name}},\n\nMi rivolgo a Lei come cittadino di {{location}} per sanzioni contro l'espansione dei coloni.\n\nSollecito il Senato per:\n- Sostegno sanzioni europee contro coloni\n- Pressione governo per misure nazionali\n- Coordinamento internazionale contro espansione illegale\n\n[RIGA PERSONALE OBBLIGATORIA]\n\nDistinti saluti,\n{{user_name}}\n{{location}}"
+        },
+        "eu": {
+          "subject": "Cittadino italiano - Sanzioni UE coloni",
+          "body": "Onorevole Europarlamentare {{rep_name}},\n\nLe scrivo come cittadino italiano per sanzioni UE contro i coloni.\n\nChiedo proposte europee per:\n- Sanzioni mirate contro espansione coloni\n- Lista nera europea responsabili\n- Misure economiche contro insediamenti illegali\n\n[RIGA PERSONALE OBBLIGATORIA]\n\nCordiali saluti,\n{{user_name}}\n{{location}}, Italia"
+        }
+      }
+    },
+    {
+      "id": "export_militare",
+      "title": "Controllo export militare",
+      "description": "Interrogazioni e sospensione export militare (L. 185/1990)",
+      "templates": {
+        "camera": {
+          "subject": "Cittadino di {{location}} - Controllo export armi Legge 185/1990",
+          "body": "Onorevole Deputato {{rep_name}},\n\nLe scrivo come cittadino di {{location}} sul controllo export militare secondo la Legge 185/1990.\n\nChiedo interrogazioni parlamentari su:\n- Verifica export armi verso Israele\n- Applicazione rigorosa Legge 185/1990\n- Sospensione forniture se usate contro civili\n\n[RIGA PERSONALE OBBLIGATORIA]\n\nLa ringrazio per l'impegno.\n\nCordiali saluti,\n{{user_name}}\nCittadino di {{location}}"
+        },
+        "senato": {
+          "subject": "Cittadino di {{location}} - Interrogazione export militare",
+          "body": "Onorevole Senatore {{rep_name}},\n\nMi rivolgo a Lei come cittadino di {{location}} per controllo export militare.\n\nSollecito interrogazioni senatoriali su:\n- Rispetto Legge 185/1990 export armi\n- Verifica uso finale forniture militari\n- Sospensione export se violano diritti umani\n\n[RIGA PERSONALE OBBLIGATORIA]\n\nDistinti saluti,\n{{user_name}}\n{{location}}"
+        },
+        "eu": {
+          "subject": "Cittadino italiano - Controllo export armi UE",
+          "body": "Onorevole Europarlamentare {{rep_name}},\n\nLe scrivo come cittadino italiano per controllo export armi europeo.\n\nChiedo verifica direttive UE su:\n- Controllo export armi membri UE\n- Applicazione criteri diritti umani\n- Coordinamento europeo per trasparenza\n\n[RIGA PERSONALE OBBLIGATORIA]\n\nCordiali saluti,\n{{user_name}}\n{{location}}, Italia"
+        }
+      }
+    },
+    {
+      "id": "generico",
+      "title": "Messaggio generico",
+      "description": "Template base per comunicazioni generali",
+      "templates": {
+        "camera": {
+          "subject": "Cittadino di {{location}} - {{custom_subject}}",
+          "body": "Onorevole Deputato {{rep_name}},\n\nLe scrivo come cittadino di {{location}} riguardo a una questione che ritengo importante.\n\n[RIGA PERSONALE OBBLIGATORIA - Descrivi qui la tua richiesta specifica]\n\nLa ringrazio per l'attenzione e il Suo servizio alla comunità.\n\nCordiali saluti,\n{{user_name}}\nCittadino di {{location}}"
+        },
+        "senato": {
+          "subject": "Cittadino di {{location}} - {{custom_subject}}",
+          "body": "Onorevole Senatore {{rep_name}},\n\nMi rivolgo a Lei come cittadino di {{location}} per una questione di interesse pubblico.\n\n[RIGA PERSONALE OBBLIGATORIA - Esponi qui la tua richiesta dettagliata]\n\nConfido nella Sua sensibilità per questi temi.\n\nDistinti saluti,\n{{user_name}}\n{{location}}"
+        },
+        "eu": {
+          "subject": "Cittadino italiano - {{custom_subject}}",
+          "body": "Onorevole Europarlamentare {{rep_name}},\n\nLe scrivo come cittadino italiano per una questione europea.\n\n[RIGA PERSONALE OBBLIGATORIA - Descrivi la tua posizione e richiesta]\n\nLa ringrazio per il Suo impegno europeo.\n\nCordiali saluti,\n{{user_name}}\n{{location}}, Italia"
+        }
+      }
+    }
+  ]
+}

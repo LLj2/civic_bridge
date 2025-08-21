@@ -11,6 +11,7 @@ import numpy as np
 import pandas as pd
 import logging
 import traceback
+import os
 from civic_lookup import CivicLookup, clean_for_json
 
 class NumpyEncoder(json.JSONEncoder):
@@ -50,6 +51,41 @@ def health_check():
         'service': 'civic-bridge-api',
         'version': '1.0.0'
     })
+
+@app.route('/static/themes.json')
+def serve_themes():
+    """Serve themes configuration"""
+    try:
+        themes_path = os.path.join('data', 'themes.json')
+        with open(themes_path, 'r', encoding='utf-8') as f:
+            themes_data = json.load(f)
+        return jsonify(themes_data)
+    except Exception as e:
+        print(f"Error serving themes: {e}")
+        # Return minimal fallback
+        return jsonify({
+            "themes": [
+                {
+                    "id": "generico",
+                    "title": "Messaggio generico", 
+                    "description": "Template base per comunicazioni generali",
+                    "templates": {
+                        "camera": {
+                            "subject": "Cittadino di {{location}} - Richiesta",
+                            "body": "Onorevole Deputato {{rep_name}},\n\n[RIGA PERSONALE OBBLIGATORIA]\n\nCordiali saluti"
+                        },
+                        "senato": {
+                            "subject": "Cittadino di {{location}} - Richiesta", 
+                            "body": "Onorevole Senatore {{rep_name}},\n\n[RIGA PERSONALE OBBLIGATORIA]\n\nDistinti saluti"
+                        },
+                        "eu": {
+                            "subject": "Cittadino italiano - Richiesta",
+                            "body": "Onorevole Europarlamentare {{rep_name}},\n\n[RIGA PERSONALE OBBLIGATORIA]\n\nCordiali saluti"
+                        }
+                    }
+                }
+            ]
+        })
 
 @app.route('/api/auth/gmail', methods=['POST'])
 def auth_gmail():
@@ -195,7 +231,7 @@ def autocomplete_comuni():
     GET /api/autocomplete?q=rom&limit=10
     """
     query = request.args.get('q', '').strip()
-    limit = min(int(request.args.get('limit', 10)), 50)  # Max 50 results
+    limit = int(request.args.get('limit', 1000))  # Return all matches by default
     
     if not query or len(query) < 2:
         return jsonify({
@@ -821,19 +857,276 @@ def home():
                 padding: 20px;
             }
             
-            /* Enhanced Representative Cards */
+            /* Enhanced Representative Cards - Compact Design */
             .representative {
-                border: 1px solid #e2e8f0;
-                padding: 20px;
-                margin: 15px 0;
-                border-radius: 8px;
+                border: 1px solid #f1f5f9;
+                padding: 12px 16px;
+                margin: 3px 0;
+                border-radius: 6px;
                 background: white;
-                box-shadow: 0 1px 3px rgba(0,0,0,0.05);
-                transition: all 0.2s ease;
+                transition: all 0.15s ease;
+                display: flex;
+                align-items: flex-start;
+                justify-content: space-between;
+                cursor: pointer;
             }
             .representative:hover {
-                box-shadow: 0 4px 12px rgba(0,0,0,0.1);
-                border-color: #cbd5e1;
+                border-color: #e2e8f0;
+                box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+            }
+            .rep-photo {
+                width: 60px;
+                height: 60px;
+                border-radius: 50%;
+                background: linear-gradient(135deg, #e2e8f0 0%, #cbd5e1 100%);
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                font-size: 24px;
+                color: #64748b;
+                flex-shrink: 0;
+            }
+            .rep-info {
+                flex: 1;
+                min-width: 0;
+                line-height: 1.3;
+            }
+            .rep-name {
+                font-size: 15px;
+                font-weight: 600;
+                color: #0f172a;
+                margin: 0 0 2px 0;
+            }
+            .rep-details {
+                font-size: 13px;
+                color: #64748b;
+                margin: 2px 0;
+            }
+            .rep-collegio {
+                font-size: 12px;
+                color: #94a3b8;
+                margin: 2px 0 0 0;
+            }
+            .rep-contact-btn {
+                background: #3b82f6;
+                color: white;
+                border: none;
+                padding: 6px 14px;
+                border-radius: 5px;
+                font-size: 13px;
+                font-weight: 500;
+                cursor: pointer;
+                transition: background-color 0.2s ease;
+                flex-shrink: 0;
+                align-self: flex-start;
+                margin-top: 2px;
+            }
+            .rep-contact-btn:hover {
+                background: #2563eb;
+            }
+            .rep-contact-btn:disabled {
+                background: #d1d5db;
+                color: #9ca3af;
+                cursor: not-allowed;
+            }
+
+            /* Message Composer Modal */
+            .composer-modal {
+                display: none;
+                position: fixed;
+                top: 0;
+                left: 0;
+                width: 100%;
+                height: 100%;
+                background: rgba(0, 0, 0, 0.5);
+                backdrop-filter: blur(2px);
+                z-index: 1000;
+                overflow-y: auto;
+            }
+            .composer-modal.show {
+                display: flex;
+                align-items: flex-start;
+                justify-content: center;
+                padding: 20px;
+            }
+            .composer-content {
+                background: white;
+                border-radius: 12px;
+                width: 100%;
+                max-width: 600px;
+                margin-top: 40px;
+                box-shadow: 0 20px 60px rgba(0, 0, 0, 0.2);
+                animation: slideUp 0.3s ease;
+            }
+            @keyframes slideUp {
+                from { opacity: 0; transform: translateY(30px); }
+                to { opacity: 1; transform: translateY(0); }
+            }
+            .composer-header {
+                padding: 24px 24px 16px 24px;
+                border-bottom: 1px solid #f1f5f9;
+            }
+            .composer-title {
+                font-size: 18px;
+                font-weight: 600;
+                color: #0f172a;
+                margin: 0 0 4px 0;
+            }
+            .composer-subtitle {
+                font-size: 13px;
+                color: #64748b;
+                margin: 0;
+            }
+            .composer-body {
+                padding: 24px;
+            }
+            .composer-field {
+                margin-bottom: 20px;
+            }
+            .composer-label {
+                display: block;
+                font-size: 14px;
+                font-weight: 500;
+                color: #374151;
+                margin-bottom: 6px;
+            }
+            .composer-label.required::after {
+                content: ' *';
+                color: #dc2626;
+            }
+            .composer-select {
+                width: 100%;
+                padding: 10px 12px;
+                border: 1px solid #d1d5db;
+                border-radius: 6px;
+                font-size: 14px;
+                background: white;
+                cursor: pointer;
+            }
+            .composer-select:focus {
+                outline: none;
+                border-color: #3b82f6;
+                box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+            }
+            .composer-input {
+                width: 100%;
+                padding: 10px 12px;
+                border: 1px solid #d1d5db;
+                border-radius: 6px;
+                font-size: 14px;
+                font-family: inherit;
+            }
+            .composer-input:focus {
+                outline: none;
+                border-color: #3b82f6;
+                box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+            }
+            .composer-textarea {
+                width: 100%;
+                min-height: 120px;
+                padding: 12px;
+                border: 1px solid #d1d5db;
+                border-radius: 6px;
+                font-size: 14px;
+                font-family: inherit;
+                line-height: 1.5;
+                resize: vertical;
+            }
+            .composer-textarea:focus {
+                outline: none;
+                border-color: #3b82f6;
+                box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+            }
+            .composer-personal {
+                background: #fefce8;
+                border: 1px solid #facc15;
+            }
+            .composer-personal:focus {
+                border-color: #eab308;
+                box-shadow: 0 0 0 3px rgba(234, 179, 8, 0.1);
+            }
+            .char-counter {
+                font-size: 12px;
+                color: #6b7280;
+                text-align: right;
+                margin-top: 4px;
+            }
+            .char-counter.warning {
+                color: #d97706;
+            }
+            .char-counter.error {
+                color: #dc2626;
+            }
+            .send-method {
+                margin: 16px 0;
+            }
+            .radio-group {
+                display: flex;
+                flex-direction: column;
+                gap: 8px;
+            }
+            .radio-option {
+                display: flex;
+                align-items: center;
+                gap: 8px;
+                padding: 8px 0;
+            }
+            .radio-option input[type="radio"] {
+                margin: 0;
+            }
+            .radio-option label {
+                font-size: 14px;
+                color: #374151;
+                cursor: pointer;
+            }
+            .composer-footer {
+                padding: 16px 24px 24px 24px;
+                border-top: 1px solid #f1f5f9;
+                display: flex;
+                justify-content: space-between;
+                align-items: center;
+                gap: 12px;
+            }
+            .footer-note {
+                font-size: 12px;
+                color: #6b7280;
+                flex: 1;
+            }
+            .footer-buttons {
+                display: flex;
+                gap: 12px;
+            }
+            .btn-secondary {
+                background: #f8fafc;
+                color: #475569;
+                border: 1px solid #e2e8f0;
+                padding: 8px 16px;
+                border-radius: 6px;
+                font-size: 14px;
+                font-weight: 500;
+                cursor: pointer;
+                transition: all 0.2s ease;
+            }
+            .btn-secondary:hover {
+                background: #e2e8f0;
+            }
+            .btn-primary {
+                background: #3b82f6;
+                color: white;
+                border: none;
+                padding: 8px 20px;
+                border-radius: 6px;
+                font-size: 14px;
+                font-weight: 500;
+                cursor: pointer;
+                transition: all 0.2s ease;
+            }
+            .btn-primary:hover {
+                background: #2563eb;
+            }
+            .btn-primary:disabled {
+                background: #d1d5db;
+                cursor: not-allowed;
             }
         </style>
     </head>
@@ -855,84 +1148,15 @@ def home():
             <div id="resultsContent"></div>
         </div>
         
-        <!-- Message Composer Modal -->
-        <div id="messageComposerModal" class="modal-overlay">
-            <div class="message-composer">
-                <div class="composer-header">
-                    <div>
-                        <h3 class="composer-title">Invia messaggio diretto</h3>
-                        <div class="composer-recipient" id="composerRecipient"></div>
-                    </div>
-                    <button class="close-btn" onclick="closeMessageComposer()">&times;</button>
-                </div>
-                
-                <div class="composer-body">
-                    <div class="oauth-section">
-                        <div class="oauth-title">Scegli il tuo provider email:</div>
-                        <div class="oauth-options">
-                            <button class="oauth-btn gmail" onclick="authenticateEmail('gmail')">
-                                <span>📧</span> Gmail
-                            </button>
-                            <button class="oauth-btn outlook" onclick="authenticateEmail('outlook')">
-                                <span>📧</span> Outlook
-                            </button>
-                        </div>
-                        <div id="authStatus" style="margin-top: 12px; font-size: 13px; color: #4a5568;"></div>
-                    </div>
-                    
-                    <form id="messageForm">
-                        <div class="form-group">
-                            <label class="form-label" for="messageTheme">Seleziona tema del messaggio</label>
-                            <select id="messageTheme" class="form-input" onchange="updateMessageTemplate()">
-                                <option value="default">📝 Messaggio generico</option>
-                                <option value="palestine">🇵🇸 Gaza e Palestina - Azione Umanitaria</option>
-                            </select>
-                        </div>
-                        
-                        <div class="form-group">
-                            <label class="form-label" for="senderName">Il tuo nome *</label>
-                            <input type="text" id="senderName" class="form-input" placeholder="Mario Rossi" required>
-                        </div>
-                        
-                        <div class="form-group" style="background: #fff3cd; border: 1px solid #ffeaa7; border-radius: 6px; padding: 12px; margin: 16px 0;">
-                            <label style="display: flex; align-items: center; gap: 8px; font-weight: 500; color: #856404;">
-                                <input type="checkbox" id="testMode" style="margin: 0;"> 
-                                🧪 Modalità Test - Invia a me invece che al rappresentante
-                            </label>
-                            <div id="testEmailInput" style="display: none; margin-top: 8px;">
-                                <input type="email" id="testEmail" class="form-input" placeholder="tua-email@example.com" style="font-size: 13px;">
-                            </div>
-                        </div>
-                        
-                        <div class="form-group">
-                            <label class="form-label" for="messageSubject">Oggetto</label>
-                            <input type="text" id="messageSubject" class="form-input" readonly>
-                        </div>
-                        
-                        <div class="form-group">
-                            <label class="form-label" for="messageBody">Messaggio *</label>
-                            <textarea id="messageBody" class="form-input form-textarea" required></textarea>
-                        </div>
-                    </form>
-                </div>
-                
-                <div class="composer-actions">
-                    <button class="btn-secondary" onclick="closeMessageComposer()">Annulla</button>
-                    <button class="btn-primary" id="sendButton" onclick="sendMessage()" disabled>
-                        <span>🚀</span> Invia Messaggio
-                    </button>
-                </div>
-            </div>
-        </div>
         
         <script>
-            let autocompleteTimeout;
-            let selectedComune = '';
+            var autocompleteTimeout;
+            var selectedComune = '';
             
             function setupAutocomplete() {
                 console.log('Setting up autocomplete...');
-                const input = document.getElementById('searchInput');
-                const list = document.getElementById('autocompleteList');
+                var input = document.getElementById('searchInput');
+                var list = document.getElementById('autocompleteList');
                 
                 if (!input) {
                     console.error('searchInput element not found!');
@@ -946,7 +1170,7 @@ def home():
                 console.log('Autocomplete elements found, adding event listeners...');
                 
                 input.addEventListener('input', function() {
-                    const query = this.value.trim();
+                    var query = this.value.trim();
                     
                     clearTimeout(autocompleteTimeout);
                     
@@ -955,14 +1179,14 @@ def home():
                         return;
                     }
                     
-                    autocompleteTimeout = setTimeout(() => {
+                    autocompleteTimeout = setTimeout(function() {
                         fetchAutocomplete(query);
                     }, 300);
                 });
                 
                 input.addEventListener('blur', function() {
                     // Hide after small delay to allow clicks
-                    setTimeout(() => hideAutocomplete(), 200);
+                    setTimeout(function() { hideAutocomplete(); }, 200);
                 });
                 
                 input.addEventListener('focus', function() {
@@ -973,9 +1197,9 @@ def home():
             }
             
             function fetchAutocomplete(query) {
-                fetch(`/api/autocomplete?q=${encodeURIComponent(query)}&limit=8`)
-                    .then(response => response.json())
-                    .then(data => {
+                fetch('/api/autocomplete?q=' + encodeURIComponent(query))
+                    .then(function(response) { return response.json(); })
+                    .then(function(data) {
                         console.log('Autocomplete response:', data);
                         if (data.success && data.results.length > 0) {
                             showAutocompleteResults(data.results);
@@ -983,7 +1207,7 @@ def home():
                             hideAutocomplete();
                         }
                     })
-                    .catch(error => {
+                    .catch(function(error) {
                         console.error('Autocomplete error:', error);
                         hideAutocomplete();
                     });
@@ -991,21 +1215,22 @@ def home():
             
             function showAutocompleteResults(results) {
                 console.log('Showing autocomplete results:', results);
-                const list = document.getElementById('autocompleteList');
+                var list = document.getElementById('autocompleteList');
                 list.innerHTML = '';
                 
-                results.forEach(result => {
+                for (let i = 0; i < results.length; i++) {
+                    const result = results[i];
                     const item = document.createElement('div');
                     item.className = 'autocomplete-item';
                     item.textContent = result.display;
-                    item.addEventListener('click', () => {
+                    item.addEventListener('click', function () {
                         document.getElementById('searchInput').value = result.comune;
                         selectedComune = result.comune;
                         hideAutocomplete();
                         searchRepresentatives();
                     });
                     list.appendChild(item);
-                });
+                }
                 
                 list.style.display = 'block';
                 console.log('Autocomplete list shown with', results.length, 'items');
@@ -1014,6 +1239,329 @@ def home():
             function hideAutocomplete() {
                 document.getElementById('autocompleteList').style.display = 'none';
             }
+            
+            function getPartyColor(party) {
+                var partyColors = {
+                    "Partito Democratico": "#e53e3e",
+                    "Lega": "#3182ce",
+                    "Movimento 5 Stelle": "#f0ad4e",
+                    "Forza Italia": "#3b82f6",
+                    "Fratelli d'Italia": "#0f172a",
+                    "Italia Viva": "#8b5cf6",
+                    "Azione": "#10b981",
+                    "Più Europa": "#f59e0b"
+                };
+                return partyColors[party] || "#6b7280";
+            }
+            
+            function getPartyCode(party) {
+                var partyCodes = {
+                    "Partito Democratico": "PD",
+                    "Lega": "Lega",
+                    "Movimento 5 Stelle": "M5S",
+                    "Forza Italia": "FI",
+                    "Fratelli d'Italia": "FdI",
+                    "Italia Viva": "IV",
+                    "Azione": "Az",
+                    "Più Europa": "+Eu",
+                    "Alleanza Verdi e Sinistra": "AVS",
+                    "Noi Moderati": "NM"
+                };
+                if (partyCodes[party]) return partyCodes[party];
+                const p = (party || '').toString();
+                return p ? p.substring(0, 3).toUpperCase() : '';
+            }
+            
+            // Global variables for composer
+            var currentThemes = [];
+            var selectedRep = null;
+            var selectedInstitution = null;
+            let currentRepresentatives = null;
+            let currentLocation = null;
+
+            // Load themes from server
+            function loadThemes() {
+                fetch('/static/themes.json')
+                    .then(function(response) { return response.json(); })
+                    .then(function(data) {
+                        currentThemes = data.themes;
+                    })
+                    .catch(function(error) {
+                        console.error('Failed to load themes:', error);
+                        // Fallback themes
+                        currentThemes = [
+                            {
+                                id: 'corridoio_umanitario',
+                                title: 'Corridoio umanitario',
+                                templates: {
+                                    camera: { subject: 'Corridoio umanitario Gaza', body: 'Template di emergenza...' }
+                                }
+                            }
+                        ];
+                    });
+            }
+
+            // Open composer modal
+            function openComposer(repIndex, institution) {
+                const map = { camera: 'camera', senato: 'senato', eu: 'eu_parliament' };
+                const listKey = map[institution] || institution;
+
+                selectedRep = (currentRepresentatives && currentRepresentatives[listKey])
+                    ? currentRepresentatives[listKey][repIndex]
+                    : null;
+                selectedInstitution = institution; // keep the short form for templates/UI
+
+                if (!selectedRep) {
+                    console.error('Representative not found for', institution, repIndex);
+                    showNotification('Impossibile aprire il compositore: rappresentante non trovato.', 'error');
+                    return;
+                }
+                
+                // Set header info
+                var roleMap = { camera: 'Deputato', senato: 'Senatore', eu: 'MEP' };
+                var role = roleMap[institution];
+                var partyCode = getPartyCode(selectedRep.gruppo_partito);
+                
+                document.getElementById('composerTitle').textContent = 'Scrivi a ' + role + ' ' + selectedRep.nome + ' ' + selectedRep.cognome;
+                
+                var locationInfo = '';
+                if (institution === 'camera') {
+                    locationInfo = 'Collegio: ' + selectedRep.collegio;
+                } else if (institution === 'senato') {
+                    locationInfo = 'Regione: ' + selectedRep.regione;
+                } else {
+                    locationInfo = 'Circoscrizione: ' + selectedRep.circoscrizione_eu;
+                }
+                document.getElementById('composerSubtitle').textContent = locationInfo + ' · Partito: ' + partyCode;
+                
+                // Populate theme dropdown
+                populateThemes();
+                
+                // Reset form
+                resetComposerForm();
+                
+                // Show modal
+                document.getElementById('composerModal').classList.add('show');
+                
+                // Focus first field
+                document.getElementById('themeSelect').focus();
+            }
+
+            // Close composer modal
+            function closeComposer() {
+                document.getElementById('composerModal').classList.remove('show');
+                resetComposerForm();
+            }
+
+            // Populate theme dropdown
+            function populateThemes() {
+                var select = document.getElementById('themeSelect');
+                select.innerHTML = '<option value="">Seleziona un tema...</option>';
+                
+                for (var i = 0; i < currentThemes.length; i++) {
+                    var theme = currentThemes[i];
+                    var option = document.createElement('option');
+                    option.value = theme.id;
+                    option.textContent = theme.title;
+                    select.appendChild(option);
+                }
+            }
+
+            // Handle theme selection
+            function onThemeChange() {
+                const themeId = document.getElementById('themeSelect').value;
+                if (!themeId) {
+                    clearMessageFields();
+                    return;
+                }
+                
+                var theme = null;
+                for (var i = 0; i < currentThemes.length; i++) {
+                    if (currentThemes[i].id === themeId) {
+                        theme = currentThemes[i];
+                        break;
+                    }
+                }
+                if (!theme || !theme.templates[selectedInstitution]) {
+                    clearMessageFields();
+                    return;
+                }
+                
+                var template = theme.templates[selectedInstitution];
+                
+                // Replace tokens in subject and body
+                var subject = replaceTokens(template.subject);
+                var body = replaceTokens(template.body);
+                
+                document.getElementById('subjectInput').value = subject;
+                document.getElementById('bodyTextarea').value = body;
+                
+                validateForm();
+            }
+
+            // Replace template tokens
+            function replaceTokens(text) {
+                var locationName = (currentLocation && currentLocation.comune) ? currentLocation.comune : '[Comune]';
+                var repName = selectedRep ? (selectedRep.nome + ' ' + selectedRep.cognome) : '[Nome Rappresentante]';
+                
+                return (text || '')
+                    .replace(/\{\{rep_name\}\}/g, repName)
+                    .replace(/\{\{location\}\}/g, locationName)
+                    .replace(/\{\{user_name\}\}/g, '[Il tuo nome]')
+                    .replace(/\{\{custom_subject\}\}/g, '[Inserisci oggetto specifico]');
+            }
+
+            // Clear message fields
+            function clearMessageFields() {
+                document.getElementById('subjectInput').value = '';
+                document.getElementById('bodyTextarea').value = '';
+                validateForm();
+            }
+
+            // Reset entire form
+            function resetComposerForm() {
+                document.getElementById('themeSelect').value = '';
+                document.getElementById('subjectInput').value = '';
+                document.getElementById('bodyTextarea').value = '';
+                document.getElementById('personalLine').value = '';
+                document.getElementById('sendMailto').checked = true;
+                updateCharCounter();
+                validateForm();
+            }
+
+            // Update character counter for personal line
+            function updateCharCounter() {
+                var textarea = document.getElementById('personalLine');
+                var counter = document.getElementById('personalCounter');
+                var length = textarea.value.length;
+                var maxLength = 300;
+                
+                counter.textContent = length + ' / ' + maxLength + ' caratteri';
+                
+                if (length > maxLength * 0.9) {
+                    counter.className = 'char-counter warning';
+                } else if (length > maxLength) {
+                    counter.className = 'char-counter error';
+                } else {
+                    counter.className = 'char-counter';
+                }
+            }
+
+            // Validate form and enable/disable send button
+            function validateForm() {
+                var theme = document.getElementById('themeSelect').value;
+                var subject = document.getElementById('subjectInput').value.trim();
+                var personalLine = document.getElementById('personalLine').value.trim();
+                var sendButton = document.getElementById('sendButton');
+                
+                var isValid = theme && subject && personalLine.length >= 20;
+                sendButton.disabled = !isValid;
+                
+                if (isValid) {
+                    sendButton.textContent = 'Invia';
+                } else {
+                    sendButton.textContent = 'Compila tutti i campi';
+                }
+            }
+
+            // Send message
+            function sendMessage() {
+                var sendMethod = document.querySelector('input[name="sendMethod"]:checked').value;
+                var subject = document.getElementById('subjectInput').value;
+                var body = document.getElementById('bodyTextarea').value;
+                var personalLine = document.getElementById('personalLine').value;
+                
+                // Replace [RIGA PERSONALE OBBLIGATORIA] with actual personal content
+                var finalBody = body.replace(/\[RIGA PERSONALE OBBLIGATORIA[^\]]*\]/g, personalLine);
+                
+                if (sendMethod === 'mailto') {
+                    openMailClient(subject, finalBody);
+                } else {
+                    sendViaOAuth(subject, finalBody);
+                }
+            }
+
+            // Open mail client
+            function openMailClient(subject, body) {
+                var email = selectedRep && selectedRep.email;
+                if (!email || email === 'Non disponibile') {
+                    showNotification('Email non disponibile per questo rappresentante.', 'error');
+                    return;
+                }
+                var mailto = 'mailto:' + encodeURIComponent(email)
+                           + '?subject=' + encodeURIComponent(subject)
+                           + '&body=' + encodeURIComponent(body);
+                try {
+                    window.open(mailto, '_blank');
+                    showSuccessMessage();
+                } catch (error) {
+                    console.error('Failed to open mail client:', error);
+                    showCopyFallback(subject, body);
+                }
+            }
+
+            // Send via OAuth (placeholder)
+            function sendViaOAuth(subject, body) {
+                alert('OAuth implementation coming soon');
+                // TODO: Implement actual OAuth sending
+                showSuccessMessage();
+            }
+
+            // Show success message
+            function showSuccessMessage() {
+                closeComposer();
+                showNotification('Email preparata per ' + selectedRep.nome + ' ' + selectedRep.cognome, 'success');
+            }
+
+            // Show copy fallback
+            function showCopyFallback(subject, body) {
+                const text = `Oggetto: ${subject}\n\n${body}`;
+                if (navigator.clipboard) {
+                    navigator.clipboard.writeText(text);
+                    showNotification('Testo copiato negli appunti', 'success');
+                } else {
+                    alert(`Impossibile aprire client email. Copia manualmente:\n\n${text}`);
+                }
+                closeComposer();
+            }
+
+            // Event listeners for composer
+            document.addEventListener('DOMContentLoaded', function() {
+                // Load themes when page loads
+                loadThemes();
+                
+                // Theme selection change
+                document.getElementById('themeSelect').addEventListener('change', onThemeChange);
+                
+                // Personal line character counter
+                const personalLine = document.getElementById('personalLine');
+                personalLine.addEventListener('input', function() {
+                    updateCharCounter();
+                    validateForm();
+                });
+                
+                // Form validation on all inputs
+                var formFields = ['themeSelect', 'subjectInput', 'personalLine'];
+                for (var i = 0; i < formFields.length; i++) {
+                    var id = formFields[i];
+                    document.getElementById(id).addEventListener('change', validateForm);
+                    document.getElementById(id).addEventListener('input', validateForm);
+                }
+                
+                // Close modal when clicking outside
+                document.getElementById('composerModal').addEventListener('click', function(e) {
+                    if (e.target === this) {
+                        closeComposer();
+                    }
+                });
+                
+                // Escape key to close
+                document.addEventListener('keydown', function(e) {
+                    if (e.key === 'Escape' && document.getElementById('composerModal').classList.contains('show')) {
+                        closeComposer();
+                    }
+                });
+            });
             
             function searchRepresentatives() {
                 const query = document.getElementById('searchInput').value.trim();
@@ -1028,17 +1576,17 @@ def home():
                 resultsDiv.style.display = 'block';
                 contentDiv.innerHTML = '<div class="loading">Ricerca in corso...</div>';
                 
-                fetch(`/api/lookup?q=${encodeURIComponent(query)}`)
-                    .then(response => response.json())
-                    .then(data => {
+                fetch('/api/lookup?q=' + encodeURIComponent(query))
+                    .then(function(response) { return response.json(); })
+                    .then(function(data) {
                         if (data.success) {
                             displayResults(data);
                         } else {
-                            contentDiv.innerHTML = `<div class="error">Errore: ${data.error}</div>`;
+                            contentDiv.innerHTML = '<div class="error">Errore: ' + data.error + '</div>';
                         }
                     })
-                    .catch(error => {
-                        contentDiv.innerHTML = `<div class="error">Errore di connessione: ${error.message}</div>`;
+                    .catch(function(error) {
+                        contentDiv.innerHTML = '<div class="error">Errore di connessione: ' + error.message + '</div>';
                     });
             }
             
@@ -1051,10 +1599,8 @@ def home():
                 currentRepresentatives = reps;
                 currentLocation = location;
                 
-                let html = `
-                    <h2>📍 ${location.comune} (${location.provincia}) - ${location.regione}</h2>
-                    <p><strong>Totale rappresentanti trovati: ${summary.total_representatives}</strong></p>
-                `;
+                var html = '<h2>📍 ' + location.comune + ' (' + location.provincia + ') - ' + location.regione + '</h2>' +
+                    '<p><strong>Totale rappresentanti trovati: ' + summary.total_representatives + '</strong></p>';
                 
                 // Camera
                 if (reps.camera && reps.camera.length > 0) {
@@ -1070,39 +1616,24 @@ def home():
                         <div class="institution-content">
                             <div class="institution-representatives">
                     `;
-                    reps.camera.forEach((rep, i) => {
+                    for (var i = 0; i < reps.camera.length; i++) {
+                        var rep = reps.camera[i];
+                        var partyCode = getPartyCode(rep.gruppo_partito);
+
                         html += `
                             <div class="representative">
-                                <div class="rep-header">
-                                    <div>
-                                        <h4 class="rep-name">${rep.nome} ${rep.cognome}</h4>
-                                        <div class="rep-party">${rep.gruppo_partito}</div>
-                                        <div class="rep-details">Collegio: ${rep.collegio}</div>
-                                    </div>
+                                <div class="rep-info">
+                                    <div class="rep-name">${rep.nome} ${rep.cognome}</div>
+                                    <div class="rep-details">Deputato · ${partyCode}</div>
+                                    <div class="rep-collegio">Collegio: ${rep.collegio}</div>
                                 </div>
-                                
-                                <div class="contact-section">
-                                    <div class="email-display">📧 ${rep.email || 'Email non disponibile'}</div>
-                                    ${rep.email && rep.email !== 'Non disponibile' ? `
-                                        <div class="contact-options">
-                                            <div style="margin-bottom: 8px; font-size: 13px; color: #4a5568;">Email con tema:</div>
-                                            <div style="display: flex; gap: 8px; margin-bottom: 8px; flex-wrap: wrap;">
-                                                <button class="contact-btn btn-email" onclick="openMailClient(${i}, 'camera', '${location.comune.replace(/'/g, "\\'")}', 'default')" style="font-size: 12px;">
-                                                    📝 Generico
-                                                </button>
-                                                <button class="contact-btn btn-email" onclick="openMailClient(${i}, 'camera', '${location.comune.replace(/'/g, "\\'")}', 'palestine')" style="font-size: 12px; background: #dc2626;">
-                                                    🇵🇸 Gaza
-                                                </button>
-                                            </div>
-                                            <button class="contact-btn btn-send-direct" onclick="sendDirectMessage(${i}, 'camera', '${location.comune.replace(/'/g, "\\'")}')" >
-                                                🚀 Invia Diretto (con scelta tema)
-                                            </button>
-                                        </div>
-                                    ` : ''}
-                                </div>
-                            </div>
-                        `;
-                    });
+                                <button class="rep-contact-btn"
+                                        onclick="openComposer(${i}, 'camera')"
+                                        ${(!rep.email || rep.email === 'Non disponibile') ? 'disabled' : ''}>
+                                    Contatta
+                                </button>
+                            </div>`;
+                    }
                     
                     html += `
                             </div>
@@ -1125,39 +1656,24 @@ def home():
                         <div class="institution-content">
                             <div class="institution-representatives">
                     `;
-                    reps.senato.forEach((rep, i) => {
+                    for (var i = 0; i < reps.senato.length; i++) {
+                        var rep = reps.senato[i];
+                        var partyCode = getPartyCode(rep.gruppo_partito);
+
                         html += `
                             <div class="representative">
-                                <div class="rep-header">
-                                    <div>
-                                        <h4 class="rep-name">${rep.nome} ${rep.cognome}</h4>
-                                        <div class="rep-party">${rep.gruppo_partito}</div>
-                                        <div class="rep-details">Regione: ${rep.regione}</div>
-                                    </div>
+                                <div class="rep-info">
+                                    <div class="rep-name">${rep.nome} ${rep.cognome}</div>
+                                    <div class="rep-details">Senatore · ${partyCode}</div>
+                                    <div class="rep-collegio">Regione: ${rep.regione}</div>
                                 </div>
-                                
-                                <div class="contact-section">
-                                    <div class="email-display">📧 ${rep.email || 'Email non disponibile'}</div>
-                                    ${rep.email && rep.email !== 'Non disponibile' ? `
-                                        <div class="contact-options">
-                                            <div style="margin-bottom: 8px; font-size: 13px; color: #4a5568;">Email con tema:</div>
-                                            <div style="display: flex; gap: 8px; margin-bottom: 8px; flex-wrap: wrap;">
-                                                <button class="contact-btn btn-email" onclick="openMailClient(${i}, 'senato', '${location.comune.replace(/'/g, "\\'")}', 'default')" style="font-size: 12px;">
-                                                    📝 Generico
-                                                </button>
-                                                <button class="contact-btn btn-email" onclick="openMailClient(${i}, 'senato', '${location.comune.replace(/'/g, "\\'")}', 'palestine')" style="font-size: 12px; background: #dc2626;">
-                                                    🇵🇸 Gaza
-                                                </button>
-                                            </div>
-                                            <button class="contact-btn btn-send-direct" onclick="sendDirectMessage(${i}, 'senato', '${location.comune.replace(/'/g, "\\'")}')" >
-                                                🚀 Invia Diretto (con scelta tema)
-                                            </button>
-                                        </div>
-                                    ` : ''}
-                                </div>
-                            </div>
-                        `;
-                    });
+                                <button class="rep-contact-btn"
+                                        onclick="openComposer(${i}, 'senato')"
+                                        ${(!rep.email || rep.email === 'Non disponibile') ? 'disabled' : ''}>
+                                    Contatta
+                                </button>
+                            </div>`;
+                    }
                     
                     html += `
                             </div>
@@ -1180,39 +1696,24 @@ def home():
                         <div class="institution-content">
                             <div class="institution-representatives">
                     `;
-                    reps.eu_parliament.forEach((rep, i) => {
+                    for (var i = 0; i < reps.eu_parliament.length; i++) {
+                        var rep = reps.eu_parliament[i];
+                        var partyCode = getPartyCode(rep.gruppo_partito);
+
                         html += `
                             <div class="representative">
-                                <div class="rep-header">
-                                    <div>
-                                        <h4 class="rep-name">${rep.nome} ${rep.cognome}</h4>
-                                        <div class="rep-party">${rep.gruppo_partito}</div>
-                                        <div class="rep-details">Circoscrizione: ${rep.circoscrizione_eu}</div>
-                                    </div>
+                                <div class="rep-info">
+                                    <div class="rep-name">${rep.nome} ${rep.cognome}</div>
+                                    <div class="rep-details">MEP · ${partyCode}</div>
+                                    <div class="rep-collegio">Circoscrizione: ${rep.circoscrizione_eu}</div>
                                 </div>
-                                
-                                <div class="contact-section">
-                                    <div class="email-display">📧 ${rep.email || 'Email non disponibile'}</div>
-                                    ${rep.email && rep.email !== 'Non disponibile' ? `
-                                        <div class="contact-options">
-                                            <div style="margin-bottom: 8px; font-size: 13px; color: #4a5568;">Email con tema:</div>
-                                            <div style="display: flex; gap: 8px; margin-bottom: 8px; flex-wrap: wrap;">
-                                                <button class="contact-btn btn-email" onclick="openMailClient(${i}, 'eu', '${location.comune.replace(/'/g, "\\'")}', 'default')" style="font-size: 12px;">
-                                                    📝 Generico
-                                                </button>
-                                                <button class="contact-btn btn-email" onclick="openMailClient(${i}, 'eu', '${location.comune.replace(/'/g, "\\'")}', 'palestine')" style="font-size: 12px; background: #dc2626;">
-                                                    🇵🇸 Gaza
-                                                </button>
-                                            </div>
-                                            <button class="contact-btn btn-send-direct" onclick="sendDirectMessage(${i}, 'eu', '${location.comune.replace(/'/g, "\\'")}')" >
-                                                🚀 Invia Diretto (con scelta tema)
-                                            </button>
-                                        </div>
-                                    ` : ''}
-                                </div>
-                            </div>
-                        `;
-                    });
+                                <button class="rep-contact-btn"
+                                        onclick="openComposer(${i}, 'eu')"
+                                        ${(!rep.email || rep.email === 'Non disponibile') ? 'disabled' : ''}>
+                                    Contatta
+                                </button>
+                            </div>`;
+                    }
                     
                     html += `
                             </div>
@@ -1251,495 +1752,8 @@ def home():
             setupAutocomplete();
             console.log('Autocomplete initialized');
             
-            // Global variables to store representatives data
-            let currentRepresentatives = null;
-            let currentLocation = null;
-            
-            // Updated contact functions that use indices  
-            function openMailClient(index, repType, userLocation, theme = 'default') {
-                if (!currentRepresentatives || !currentRepresentatives[repType] || !currentRepresentatives[repType][index]) {
-                    console.error('Representative not found:', index, repType);
-                    return;
-                }
-                const rep = currentRepresentatives[repType][index];
-                
-                if (!rep.email || rep.email === 'Non disponibile') {
-                    showNotification("Email non disponibile per questo rappresentante.", "error");
-                    return;
-                }
-                
-                try {
-                    const mailto = createMailto(rep, repType, userLocation, theme);
-                    window.open(mailto, '_blank');
-                    showNotification("Client email aperto! Verifica che il messaggio sia stato creato correttamente.", "success");
-                } catch (error) {
-                    console.error("Error creating mailto:", error);
-                    showNotification("Errore nell'apertura del client email. Prova a copiare l'email manualmente.", "error");
-                }
-            }
-            
-            function sendDirectMessage(index, repType, userLocation) {
-                if (!currentRepresentatives || !currentRepresentatives[repType] || !currentRepresentatives[repType][index]) {
-                    console.error('Representative not found:', index, repType);
-                    return;
-                }
-                const rep = currentRepresentatives[repType][index];
-                openMessageComposer(rep, repType, userLocation);
-            }
-            
-            // Contact functionality
-            function createMailto(rep, repType, userLocation, theme = 'default') {
-                const templates = getMessageTemplates(theme);
-                const template = templates[repType] || templates.camera;
-                
-                const subject = template.subject
-                    .replace('{{rep_name}}', `${rep.nome} ${rep.cognome}`)
-                    .replace('{{location}}', userLocation);
-                    
-                const body = template.body
-                    .replace('{{rep_name}}', `${rep.nome} ${rep.cognome}`)
-                    .replace('{{rep_title}}', getRepresentativeTitle(repType))
-                    .replace('{{location}}', userLocation)
-                    .replace('{{user_name}}', '[Il tuo nome]');
-                
-                const mailto = `mailto:${rep.email}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
-                return mailto;
-            }
-            
-            function getRepresentativeTitle(repType) {
-                const titles = {
-                    'camera': 'Onorevole Deputato/a',
-                    'senato': 'Onorevole Senatore/Senatrice',
-                    'eu': 'Onorevole Deputato/a Europeo/a'
-                };
-                return titles[repType] || 'Gentile Rappresentante';
-            }
-            
-            // Palestine theme templates
-            function getPalestineTemplates() {
-                return {
-                    camera: {
-                        subject: 'Cittadino di {{location}} - Azione urgente per Gaza e diritti umani',
-                        body: `Onorevole Deputato {{rep_name}},
 
-Le scrivo come cittadino di {{location}} profondamente preoccupato per la situazione umanitaria a Gaza e in Palestina.
 
-Chiedo il Suo impegno parlamentare su quattro punti urgenti:
-
-1. CORRIDOIO UMANITARIO: Sollecitare l'apertura immediata di un corridoio umanitario per far entrare gli aiuti a Gaza, senza se e senza ma.
-
-2. PROTEZIONE GIORNALISTI: Garantire l'accesso sicuro ai giornalisti nella Striscia di Gaza per assicurare una corretta informazione.
-
-3. SANZIONI MIRATE: Promuovere sanzioni specifiche contro i leader del movimento dei coloni israeliani.
-
-4. CONTROLLO EXPORT MILITARE: Presentare interrogazioni parlamentari per verificare e, se necessario, sospendere l'export militare verso Israele secondo la Legge 185/1990.
-
-[SEZIONE PERSONALIZZABILE - Aggiungi qui le tue considerazioni specifiche]
-
-La ringrazio per l'attenzione e confido nel Suo impegno per i diritti umani e la pace.
-
-Cordiali saluti,
-{{user_name}}
-Cittadino di {{location}}`
-                    },
-                    senato: {
-                        subject: 'Cittadino di {{location}} - Richiesta azione senatoriale per Gaza',
-                        body: `Onorevole Senatore {{rep_name}},
-
-Mi rivolgo a Lei come cittadino di {{location}} per sollecitare un'azione decisa del Senato sulla crisi umanitaria a Gaza.
-
-Ritengo prioritari questi interventi legislativi:
-
-1. CORRIDOIO UMANITARIO: Impegnare il Governo per l'apertura immediata di corridoi umanitari verso Gaza, senza precondizioni.
-
-2. LIBERTÀ DI STAMPA: Garantire protezione e accesso sicuro per i giornalisti che documentano la situazione nella Striscia.
-
-3. SANZIONI EUROPEE: Sostenere a livello europeo sanzioni mirate contro i responsabili dell'espansione dei coloni.
-
-4. CONTROLLO ARMI: Utilizzare gli strumenti del Senato per verificare il rispetto della Legge 185/1990 sull'export militare.
-
-[SEZIONE PERSONALIZZABILE - Scrivi qui le tue ragioni personali]
-
-Confido nella Sua sensibilità per questi temi di giustizia internazionale.
-
-Distinti saluti,
-{{user_name}}
-{{location}}`
-                    },
-                    eu: {
-                        subject: 'Cittadino italiano - Azione UE urgente per Gaza e Palestina',
-                        body: `Onorevole Europarlamentare {{rep_name}},
-
-Le scrivo come cittadino italiano per sollecitare un'azione europea sulla crisi a Gaza.
-
-Chiedo il Suo sostegno per:
-
-1. AIUTI UMANITARI UE: Promuovere corridoi umanitari europei immediati verso Gaza.
-
-2. PROTEZIONE MEDIA: Sostenere risoluzioni UE per la sicurezza dei giornalisti nell'area.
-
-3. SANZIONI UE: Avanzare proposte di sanzioni europee contro l'espansione illegale dei coloni.
-
-4. CONTROLLO ARMI UE: Verificare l'applicazione delle direttive europee sull'export di armi.
-
-[SEZIONE PERSONALIZZABILE - Le tue considerazioni]
-
-La ringrazio per il Suo impegno per i diritti umani in Europa.
-
-Cordiali saluti,
-{{user_name}}
-{{location}}, Italia`
-                    }
-                };
-            }
-
-            function getMessageTemplates(theme = 'default') {
-                if (theme === 'palestine') {
-                    return getPalestineTemplates();
-                }
-                
-                // Default templates
-                return {
-                    camera: {
-                        subject: 'Cittadino di {{location}} - Richiesta informazioni',
-                        body: `Gentile {{rep_title}} {{rep_name}},
-
-sono {{user_name}}, cittadino/a di {{location}}.
-
-Vi scrivo per [descrivere brevemente la questione o richiesta].
-
-[Aggiungere qui il contenuto del messaggio]
-
-Ringrazio per l'attenzione e resto in attesa di un riscontro.
-
-Cordiali saluti,
-{{user_name}}
-
----
-Messaggio inviato tramite Civic Bridge (https://civic-bridge.it)`
-                    },
-                    senato: {
-                        subject: 'Cittadino di {{location}} - Richiesta informazioni',
-                        body: `Gentile {{rep_title}} {{rep_name}},
-
-sono {{user_name}}, cittadino/a di {{location}}.
-
-Vi scrivo per [descrivere brevemente la questione o richiesta].
-
-[Aggiungere qui il contenuto del messaggio]
-
-Ringrazio per l'attenzione e resto in attesa di un riscontro.
-
-Cordiali saluti,
-{{user_name}}
-
----
-Messaggio inviato tramite Civic Bridge (https://civic-bridge.it)`
-                    },
-                    eu: {
-                        subject: 'Cittadino italiano - Richiesta informazioni EU',
-                        body: `Gentile {{rep_title}} {{rep_name}},
-
-sono {{user_name}}, cittadino/a italiano/a residente a {{location}}.
-
-Vi scrivo per [descrivere brevemente la questione europea o richiesta].
-
-[Aggiungere qui il contenuto del messaggio]
-
-Ringrazio per l'attenzione e resto in attesa di un riscontro.
-
-Cordiali saluti,
-{{user_name}}
-
----
-Messaggio inviato tramite Civic Bridge (https://civic-bridge.it)`
-                    }
-                };
-            }
-            
-            
-            // Global variables for message composer
-            let currentRepresentative = null;
-            let currentRepType = null;
-            let currentUserLocation = null;
-            let isAuthenticated = false;
-            let authProvider = null;
-            
-            
-            function openMessageComposer(rep, repType, userLocation) {
-                if (!rep) return;
-                
-                // Store current context in global variables
-                currentRepresentative = rep;
-                currentRepType = repType;
-                currentUserLocation = userLocation;
-                
-                // Update modal header
-                const recipientDiv = document.getElementById('composerRecipient');
-                recipientDiv.textContent = `A: ${currentRepresentative.nome} ${currentRepresentative.cognome} (${currentRepresentative.email})`;
-                
-                // Pre-fill the form with default template
-                updateMessageTemplate();
-                
-                // Show modal
-                const modal = document.getElementById('messageComposerModal');
-                modal.classList.add('show');
-                
-                // Setup form validation and focus
-                setTimeout(() => {
-                    setupFormValidation();
-                    setupTestMode();
-                    document.getElementById('senderName').focus();
-                }, 300);
-            }
-            
-            // Update message template based on theme selection
-            function updateMessageTemplate() {
-                if (!currentRepresentative) return;
-                
-                const themeSelect = document.getElementById('messageTheme');
-                const selectedTheme = themeSelect ? themeSelect.value : 'default';
-                
-                const templates = getMessageTemplates(selectedTheme);
-                const template = templates[currentRepType] || templates.camera;
-                
-                const subjectInput = document.getElementById('messageSubject');
-                const bodyTextarea = document.getElementById('messageBody');
-                
-                if (subjectInput && bodyTextarea) {
-                    subjectInput.value = template.subject
-                        .replace('{{rep_name}}', `${currentRepresentative.nome} ${currentRepresentative.cognome}`)
-                        .replace('{{location}}', currentUserLocation);
-                    
-                    bodyTextarea.value = template.body
-                        .replace('{{rep_name}}', `${currentRepresentative.nome} ${currentRepresentative.cognome}`)
-                        .replace('{{rep_title}}', getRepresentativeTitle(currentRepType))
-                        .replace('{{location}}', currentUserLocation)
-                        .replace('{{user_name}}', '[Il tuo nome]');
-                }
-            }
-
-            function closeMessageComposer() {
-                const modal = document.getElementById('messageComposerModal');
-                modal.classList.remove('show');
-                
-                // Reset form
-                document.getElementById('messageForm').reset();
-                document.getElementById('authStatus').textContent = '';
-                isAuthenticated = false;
-                authProvider = null;
-                updateSendButton();
-            }
-            
-            // OAuth Authentication Functions
-            function authenticateEmail(provider) {
-                const authStatus = document.getElementById('authStatus');
-                authStatus.textContent = `Collegamento con ${provider}...`;
-                
-                if (provider === 'gmail') {
-                    authenticateGmail();
-                } else if (provider === 'outlook') {
-                    authenticateOutlook();
-                }
-            }
-            
-            async function authenticateGmail() {
-                try {
-                    const response = await fetch('/api/auth/gmail', {
-                        method: 'POST',
-                        headers: {
-                            'Content-Type': 'application/json'
-                        }
-                    });
-                    
-                    const data = await response.json();
-                    
-                    if (data.success) {
-                        // For MVP, simulate successful authentication
-                        // In production, would handle OAuth redirect flow
-                        setTimeout(() => {
-                            isAuthenticated = true;
-                            authProvider = 'gmail';
-                            document.getElementById('authStatus').innerHTML = 
-                                '<span style="color: #38a169;">✓ Gmail collegato</span>';
-                            updateSendButton();
-                            showNotification("Gmail collegato con successo!", "success");
-                        }, 1000);
-                    } else {
-                        showNotification("Errore collegamento Gmail: " + data.error, "error");
-                    }
-                } catch (error) {
-                    console.error('Gmail auth error:', error);
-                    showNotification("Errore di connessione. Riprova.", "error");
-                }
-            }
-            
-            async function authenticateOutlook() {
-                try {
-                    const response = await fetch('/api/auth/outlook', {
-                        method: 'POST',
-                        headers: {
-                            'Content-Type': 'application/json'
-                        }
-                    });
-                    
-                    const data = await response.json();
-                    
-                    if (data.success) {
-                        // For MVP, simulate successful authentication
-                        // In production, would handle OAuth redirect flow
-                        setTimeout(() => {
-                            isAuthenticated = true;
-                            authProvider = 'outlook';
-                            document.getElementById('authStatus').innerHTML = 
-                                '<span style="color: #38a169;">✓ Outlook collegato</span>';
-                            updateSendButton();
-                            showNotification("Outlook collegato con successo!", "success");
-                        }, 1000);
-                    } else {
-                        showNotification("Errore collegamento Outlook: " + data.error, "error");
-                    }
-                } catch (error) {
-                    console.error('Outlook auth error:', error);
-                    showNotification("Errore di connessione. Riprova.", "error");
-                }
-            }
-            
-            function updateSendButton() {
-                const sendButton = document.getElementById('sendButton');
-                const senderName = document.getElementById('senderName').value.trim();
-                const messageBody = document.getElementById('messageBody').value.trim();
-                
-                const canSend = isAuthenticated && senderName && messageBody;
-                sendButton.disabled = !canSend;
-            }
-            
-            // Test mode setup
-            function setupTestMode() {
-                const testModeCheckbox = document.getElementById('testMode');
-                const testEmailInput = document.getElementById('testEmailInput');
-                
-                testModeCheckbox.addEventListener('change', function() {
-                    if (this.checked) {
-                        testEmailInput.style.display = 'block';
-                        document.getElementById('testEmail').required = true;
-                    } else {
-                        testEmailInput.style.display = 'none';
-                        document.getElementById('testEmail').required = false;
-                    }
-                    updateSendButton();
-                });
-            }
-            
-            // Form validation - setup when modal opens
-            function setupFormValidation() {
-                const senderNameInput = document.getElementById('senderName');
-                const messageBodyInput = document.getElementById('messageBody');
-                
-                if (senderNameInput && messageBodyInput) {
-                    // Remove any existing listeners first
-                    senderNameInput.removeEventListener('input', updateSendButton);
-                    messageBodyInput.removeEventListener('input', updateSendButton);
-                    
-                    // Add listeners
-                    senderNameInput.addEventListener('input', updateSendButton);
-                    messageBodyInput.addEventListener('input', updateSendButton);
-                    
-                    // Auto-replace placeholder in message body
-                    senderNameInput.addEventListener('input', function() {
-                        const messageBody = messageBodyInput.value;
-                        const updatedBody = messageBody.replace(/\[Il tuo nome\]/g, this.value || '[Il tuo nome]');
-                        messageBodyInput.value = updatedBody;
-                    });
-                }
-            }
-            
-            // Send message function (updated)
-            async function sendMessage() {
-                if (!isAuthenticated) {
-                    showNotification("Prima devi collegarti a Gmail o Outlook", "error");
-                    return;
-                }
-                
-                const sendButton = document.getElementById('sendButton');
-                const originalText = sendButton.innerHTML;
-                
-                try {
-                    // Update button state
-                    sendButton.disabled = true;
-                    sendButton.innerHTML = '<span>⏳</span> Invio in corso...';
-                    
-                    // Check if test mode is enabled
-                    const testMode = document.getElementById('testMode').checked;
-                    const recipientEmail = testMode ? 
-                        document.getElementById('testEmail').value : 
-                        currentRepresentative.email;
-                    
-                    const messageData = {
-                        to: recipientEmail,
-                        subject: document.getElementById('messageSubject').value,
-                        body: document.getElementById('messageBody').value,
-                        senderName: document.getElementById('senderName').value,
-                        provider: authProvider,
-                        representative: currentRepresentative,
-                        repType: currentRepType,
-                        location: currentUserLocation,
-                        testMode: testMode
-                    };
-                    
-                    // Send email via API
-                    const response = await fetch('/api/send-email', {
-                        method: 'POST',
-                        headers: {
-                            'Content-Type': 'application/json'
-                        },
-                        body: JSON.stringify(messageData)
-                    });
-                    
-                    const result = await response.json();
-                    
-                    if (!result.success) {
-                        throw new Error(result.error || 'Send failed');
-                    }
-                    
-                    showNotification("Messaggio inviato con successo!", "success");
-                    closeMessageComposer();
-                    
-                } catch (error) {
-                    console.error('Send error:', error);
-                    showNotification("Errore nell'invio del messaggio. Riprova.", "error");
-                    sendButton.disabled = false;
-                    sendButton.innerHTML = originalText;
-                }
-            }
-            
-            async function simulateEmailSend(messageData) {
-                // Simulate API call delay
-                return new Promise((resolve) => {
-                    setTimeout(() => {
-                        console.log('Email would be sent:', messageData);
-                        resolve();
-                    }, 2000);
-                });
-            }
-            
-            // Close modal when clicking outside
-            document.addEventListener('click', function(event) {
-                const modal = document.getElementById('messageComposerModal');
-                if (event.target === modal) {
-                    closeMessageComposer();
-                }
-            });
-            
-            // Close modal with Escape key
-            document.addEventListener('keydown', function(event) {
-                if (event.key === 'Escape') {
-                    const modal = document.getElementById('messageComposerModal');
-                    if (modal.classList.contains('show')) {
-                        closeMessageComposer();
-                    }
-                }
-            });
             
             function showNotification(message, type = 'info') {
                 // Remove any existing notifications
@@ -1770,6 +1784,73 @@ Messaggio inviato tramite Civic Bridge (https://civic-bridge.it)`
                 }, 4000);
             }
         </script>
+        
+        <!-- Message Composer Modal -->
+        <div id="composerModal" class="composer-modal">
+            <div class="composer-content">
+                <div class="composer-header">
+                    <h2 id="composerTitle" class="composer-title">Scrivi a [Nome Cognome]</h2>
+                    <p id="composerSubtitle" class="composer-subtitle">Collegio: [label] · Partito: [sigla]</p>
+                </div>
+                
+                <div class="composer-body">
+                    <!-- Theme Selection -->
+                    <div class="composer-field">
+                        <label class="composer-label required" for="themeSelect">Tema</label>
+                        <select id="themeSelect" class="composer-select" required>
+                            <option value="">Seleziona un tema...</option>
+                        </select>
+                    </div>
+                    
+                    <!-- Subject -->
+                    <div class="composer-field">
+                        <label class="composer-label required" for="subjectInput">Oggetto</label>
+                        <input type="text" id="subjectInput" class="composer-input" required>
+                    </div>
+                    
+                    <!-- Message Body -->
+                    <div class="composer-field">
+                        <label class="composer-label" for="bodyTextarea">Testo del messaggio</label>
+                        <textarea id="bodyTextarea" class="composer-textarea" readonly></textarea>
+                    </div>
+                    
+                    <!-- Personal Line (Required) -->
+                    <div class="composer-field">
+                        <label class="composer-label required" for="personalLine">Riga personale (obbligatoria)</label>
+                        <textarea id="personalLine" class="composer-textarea composer-personal" 
+                                placeholder="Aggiungi qui le tue considerazioni personali (minimo 20 caratteri)..." 
+                                required minlength="20"></textarea>
+                        <div id="personalCounter" class="char-counter">0 / 300 caratteri</div>
+                    </div>
+                    
+                    <!-- Send Method -->
+                    <div class="composer-field send-method">
+                        <label class="composer-label">Metodo di invio</label>
+                        <div class="radio-group">
+                            <div class="radio-option">
+                                <input type="radio" id="sendMailto" name="sendMethod" value="mailto" checked>
+                                <label for="sendMailto">Apri nel mio client email</label>
+                            </div>
+                            <div class="radio-option">
+                                <input type="radio" id="sendOAuth" name="sendMethod" value="oauth">
+                                <label for="sendOAuth">Invia come me (Gmail/Outlook)</label>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="composer-footer">
+                    <div class="footer-note">Non salviamo il testo della tua email.</div>
+                    <div class="footer-buttons">
+                        <button type="button" class="btn-secondary" onclick="closeComposer()">Annulla</button>
+                        <button type="button" id="sendButton" class="btn-primary" onclick="sendMessage()" disabled>
+                            Invia
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    
     </body>
     </html>
     '''
