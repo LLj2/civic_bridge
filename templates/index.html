@@ -4,9 +4,9 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Civic Bridge - Trova i tuoi rappresentanti</title>
-    <link rel="stylesheet" href="{{ url_for('static', filename='css/main.css') }}">
-    <link rel="stylesheet" href="{{ url_for('static', filename='css/components.css') }}">
-    <link rel="stylesheet" href="{{ url_for('static', filename='css/responsive.css') }}">
+    {% for css_file in css_files %}
+    <link rel="stylesheet" href="{{ url_for('static', filename=css_file) }}">
+    {% endfor %}
 </head>
 <body>
     <div class="header">
@@ -92,7 +92,13 @@
         </div>
     </div>
 
-    <!-- ES Modules -->
+    <!-- JavaScript Assets -->
+    {% if is_debug %}
     <script type="module" src="{{ url_for('static', filename='js/main.js') }}"></script>
+    {% else %}
+    {% for js_file in js_files %}
+    <script src="{{ url_for('static', filename=js_file) }}"></script>
+    {% endfor %}
+    {% endif %}
 </body>
 </html>
