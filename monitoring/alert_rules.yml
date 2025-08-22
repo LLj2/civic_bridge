@@ -1,0 +1,165 @@
+# Prometheus Alert Rules for Civic Bridge
+
+groups:
+- name: civic_bridge_alerts
+  rules:
+  
+  # Application health alerts
+  - alert: CivicBridgeDown
+    expr: up{job="civic-bridge"} == 0
+    for: 1m
+    labels:
+      severity: critical
+    annotations:
+      summary: "Civic Bridge application is down"
+      description: "Civic Bridge application has been down for more than 1 minute"
+
+  - alert: HighErrorRate
+    expr: rate(civic_bridge_requests_total{status_code=~"5.."}[5m]) > 0.1
+    for: 2m
+    labels:
+      severity: warning
+    annotations:
+      summary: "High error rate detected"
+      description: "Error rate is {{ $value }} errors per second over the last 5 minutes"
+
+  - alert: HighResponseTime
+    expr: histogram_quantile(0.95, rate(civic_bridge_request_duration_seconds_bucket[5m])) > 2
+    for: 2m
+    labels:
+      severity: warning
+    annotations:
+      summary: "High response time detected" 
+      description: "95th percentile response time is {{ $value }}s over the last 5 minutes"
+
+  # Database alerts
+  - alert: DatabaseConnectionPoolHigh
+    expr: civic_bridge_db_connection_pool{status="active"} / civic_bridge_db_connection_pool{status="total"} > 0.8
+    for: 5m
+    labels:
+      severity: warning
+    annotations:
+      summary: "Database connection pool usage high"
+      description: "Database connection pool is {{ $value | humanizePercentage }} full"
+
+  - alert: SlowDatabaseQueries
+    expr: histogram_quantile(0.95, rate(civic_bridge_db_query_duration_seconds_bucket[5m])) > 5
+    for: 2m
+    labels:
+      severity: warning
+    annotations:
+      summary: "Slow database queries detected"
+      description: "95th percentile database query time is {{ $value }}s"
+
+  # Cache alerts
+  - alert: LowCacheHitRatio
+    expr: civic_bridge_cache_hit_ratio < 50
+    for: 5m
+    labels:
+      severity: warning
+    annotations:
+      summary: "Low cache hit ratio"
+      description: "Cache hit ratio is {{ $value }}%, which is below 50%"
+
+  - alert: CacheConnectionFailed
+    expr: increase(civic_bridge_cache_operations_total{result="error"}[5m]) > 10
+    for: 2m
+    labels:
+      severity: critical
+    annotations:
+      summary: "Cache connection issues"
+      description: "Multiple cache operation failures detected"
+
+  # System resource alerts
+  - alert: HighMemoryUsage
+    expr: (1 - (node_memory_MemAvailable_bytes / node_memory_MemTotal_bytes)) > 0.9
+    for: 5m
+    labels:
+      severity: warning
+    annotations:
+      summary: "High memory usage"
+      description: "Memory usage is {{ $value | humanizePercentage }}"
+
+  - alert: HighDiskUsage
+    expr: (1 - (node_filesystem_avail_bytes{fstype!="tmpfs"} / node_filesystem_size_bytes{fstype!="tmpfs"})) > 0.9
+    for: 5m
+    labels:
+      severity: warning
+    annotations:
+      summary: "High disk usage"
+      description: "Disk usage on {{ $labels.device }} is {{ $value | humanizePercentage }}"
+
+  # Data freshness alerts
+  - alert: StaleData
+    expr: civic_bridge_data_freshness_hours > 168  # 7 days
+    for: 1h
+    labels:
+      severity: warning
+    annotations:
+      summary: "Data is stale"
+      description: "{{ $labels.data_type }} data is {{ $value }} hours old"
+
+- name: external_services
+  rules:
+  
+  # PostgreSQL alerts
+  - alert: PostgreSQLDown
+    expr: up{job="postgres"} == 0
+    for: 1m
+    labels:
+      severity: critical
+    annotations:
+      summary: "PostgreSQL is down"
+      description: "PostgreSQL database has been down for more than 1 minute"
+
+  # Redis alerts  
+  - alert: RedisDown
+    expr: up{job="redis"} == 0
+    for: 1m
+    labels:
+      severity: critical
+    annotations:
+      summary: "Redis is down"
+      description: "Redis cache has been down for more than 1 minute"
+
+  - alert: RedisHighMemoryUsage
+    expr: redis_memory_used_bytes / redis_memory_max_bytes > 0.9
+    for: 5m
+    labels:
+      severity: warning
+    annotations:
+      summary: "Redis memory usage high"
+      description: "Redis memory usage is {{ $value | humanizePercentage }}"
+
+- name: business_metrics
+  rules:
+
+  # Low activity alerts
+  - alert: LowRequestVolume
+    expr: rate(civic_bridge_requests_total[1h]) < 0.1
+    for: 30m
+    labels:
+      severity: info
+    annotations:
+      summary: "Low request volume"
+      description: "Request volume is unusually low: {{ $value }} requests per second over the last hour"
+
+  # Autocomplete performance
+  - alert: AutocompleteErrors
+    expr: rate(civic_bridge_autocomplete_requests_total{result="error"}[5m]) > 0.05
+    for: 2m
+    labels:
+      severity: warning
+    annotations:
+      summary: "Autocomplete errors detected"
+      description: "Autocomplete error rate is {{ $value }} errors per second"
+
+  # Representative lookup issues
+  - alert: LookupFailures
+    expr: rate(civic_bridge_lookup_requests_total{has_results="false"}[5m]) / rate(civic_bridge_lookup_requests_total[5m]) > 0.5
+    for: 5m
+    labels:
+      severity: warning
+    annotations:
+      summary: "High lookup failure rate"
+      description: "{{ $value | humanizePercentage }} of lookups are returning no results"

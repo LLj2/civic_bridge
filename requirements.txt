@@ -1,0 +1,39 @@
+# Civic Bridge Production Requirements
+
+# Core web framework
+Flask==3.1.1
+flask-cors==6.0.1
+gunicorn==21.2.0
+
+# Database
+psycopg2-binary==2.9.7
+SQLAlchemy==2.0.21
+Flask-SQLAlchemy==3.0.5
+
+# Data processing
+pandas==2.3.1
+numpy==2.3.2
+
+# Web scraping and requests
+requests==2.32.4
+beautifulsoup4==4.13.4
+
+# Caching
+redis==5.0.1
+Flask-Caching==2.1.0
+
+# Rate limiting and security
+Flask-Limiter==3.5.0
+Flask-Talisman==1.1.0
+
+# Monitoring and logging
+prometheus-flask-exporter==0.23.0
+
+# Environment and configuration
+python-dotenv==1.0.0
+
+# Development and testing
+pytest==7.4.2
+pytest-flask==1.2.0
+black==23.7.0
+flake8==6.0.0

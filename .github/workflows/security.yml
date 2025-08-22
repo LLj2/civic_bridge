@@ -1,0 +1,254 @@
+name: Security Scanning
+
+on:
+  schedule:
+    - cron: '0 2 * * 1'  # Weekly on Monday at 2 AM
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  codeql:
+    name: CodeQL Analysis
+    runs-on: ubuntu-latest
+    permissions:
+      actions: read
+      contents: read
+      security-events: write
+
+    strategy:
+      fail-fast: false
+      matrix:
+        language: [ 'python', 'javascript' ]
+
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+
+    - name: Initialize CodeQL
+      uses: github/codeql-action/init@v2
+      with:
+        languages: ${{ matrix.language }}
+
+    - name: Autobuild
+      uses: github/codeql-action/autobuild@v2
+
+    - name: Perform CodeQL Analysis
+      uses: github/codeql-action/analyze@v2
+      with:
+        category: "/language:${{matrix.language}}"
+
+  dependency-scan:
+    name: Dependency Vulnerability Scan
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: '3.11'
+
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install safety pip-audit
+
+    - name: Run Safety check
+      run: |
+        safety check --json --output safety-report.json
+        
+    - name: Run pip-audit
+      run: |
+        pip-audit --format=json --output=pip-audit-report.json
+
+    - name: Upload security reports
+      uses: actions/upload-artifact@v3
+      with:
+        name: security-reports
+        path: |
+          safety-report.json
+          pip-audit-report.json
+
+  secret-scan:
+    name: Secret Scanning
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      with:
+        fetch-depth: 0
+
+    - name: Run GitLeaks
+      uses: gitleaks/gitleaks-action@v2
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+  container-scan:
+    name: Container Security Scan
+    runs-on: ubuntu-latest
+    if: github.event_name == 'push'
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Build Docker image
+      run: |
+        docker build -t civic-bridge:scan .
+
+    - name: Run Trivy vulnerability scanner
+      uses: aquasecurity/trivy-action@master
+      with:
+        image-ref: 'civic-bridge:scan'
+        format: 'sarif'
+        output: 'trivy-results.sarif'
+
+    - name: Upload Trivy scan results to GitHub Security tab
+      uses: github/codeql-action/upload-sarif@v2
+      with:
+        sarif_file: 'trivy-results.sarif'
+
+    - name: Run Trivy filesystem scan
+      uses: aquasecurity/trivy-action@master
+      with:
+        scan-type: 'fs'
+        scan-ref: '.'
+        format: 'sarif'
+        output: 'trivy-fs-results.sarif'
+
+    - name: Upload filesystem scan results
+      uses: github/codeql-action/upload-sarif@v2
+      with:
+        sarif_file: 'trivy-fs-results.sarif'
+
+  license-scan:
+    name: License Compliance Scan
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: '3.11'
+
+    - name: Install pip-licenses
+      run: |
+        python -m pip install --upgrade pip
+        pip install pip-licenses
+        pip install -r requirements.txt
+
+    - name: Generate license report
+      run: |
+        pip-licenses --format=json --output-file=licenses.json
+        pip-licenses --format=html --output-file=licenses.html
+
+    - name: Check for GPL licenses
+      run: |
+        # Fail if GPL licenses are found (adjust as needed)
+        if pip-licenses | grep -i gpl; then
+          echo "GPL licenses found - review required"
+          exit 1
+        fi
+
+    - name: Upload license report
+      uses: actions/upload-artifact@v3
+      with:
+        name: license-report
+        path: |
+          licenses.json
+          licenses.html
+
+  security-policy:
+    name: Validate Security Policy
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Check for security policy
+      run: |
+        if [ ! -f SECURITY.md ]; then
+          echo "SECURITY.md file not found"
+          exit 1
+        fi
+
+    - name: Validate Dockerfile security
+      run: |
+        # Check for security best practices in Dockerfile
+        python << 'EOF'
+        import sys
+        
+        dockerfile_checks = [
+            ("FROM", "base image should be specific version"),
+            ("USER", "should run as non-root user"),
+            ("COPY --chown", "files should have proper ownership"),
+            ("HEALTHCHECK", "should include health check")
+        ]
+        
+        with open('Dockerfile', 'r') as f:
+            content = f.read()
+            
+        failed_checks = []
+        for check, description in dockerfile_checks:
+            if check == "FROM" and ":latest" in content:
+                failed_checks.append(f"Using :latest tag - {description}")
+            elif check == "USER" and "USER " not in content:
+                failed_checks.append(f"Missing USER directive - {description}")
+            elif check == "COPY --chown" and "COPY --chown" not in content:
+                failed_checks.append(f"Missing --chown in COPY - {description}")
+            elif check == "HEALTHCHECK" and "HEALTHCHECK" not in content:
+                failed_checks.append(f"Missing HEALTHCHECK - {description}")
+        
+        if failed_checks:
+            print("Dockerfile security issues found:")
+            for issue in failed_checks:
+                print(f"  - {issue}")
+            sys.exit(1)
+        else:
+            print("Dockerfile security checks passed")
+        EOF
+
+    - name: Check environment configuration
+      run: |
+        # Ensure .env.example exists and contains required variables
+        if [ ! -f .env.example ]; then
+          echo ".env.example file not found"
+          exit 1
+        fi
+        
+        required_vars=("SECRET_KEY" "DATABASE_URL" "REDIS_URL")
+        for var in "${required_vars[@]}"; do
+          if ! grep -q "$var" .env.example; then
+            echo "Required environment variable $var not found in .env.example"
+            exit 1
+          fi
+        done
+
+  sbom-generation:
+    name: Generate Software Bill of Materials
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Generate Python SBOM
+      uses: anchore/sbom-action@v0
+      with:
+        path: .
+        format: spdx-json
+
+    - name: Upload SBOM
+      uses: actions/upload-artifact@v3
+      with:
+        name: sbom
+        path: "*.spdx.json"
