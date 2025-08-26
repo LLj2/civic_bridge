@@ -4,7 +4,7 @@
  */
 
 import { setupAutocomplete, searchRepresentatives } from './search.js';
-import { initComposer } from './composer-new.js';
+import { initComposer } from './composer.js';
 import { loadThemes } from './api.js';
 import { setThemes } from './state.js';
 import { showNotification } from './utils.js';

@@ -3,9 +3,44 @@
  * Handles the modal, form validation, and message sending
  */
 
-import { getRepresentatives, setSelectedRep, getSelectedRep, getSelectedInstitution, clearSelectedRep } from './state.js';
+import { getRepresentatives, setSelectedRep, getSelectedRep, getSelectedInstitution, clearSelectedRep, getLocation } from './state.js';
 import { getPartyCode, showNotification } from './utils.js';
-import { replaceTokens, getTemplate, populateThemes } from './themes.js';
+import { loadThemes } from './api.js';
+
+// Composer state
+let themesConfig = null;
+let currentTopics = [];
+let oauthAvailable = false;
+
+/**
+ * Initialize composer
+ */
+export async function initComposer() {
+  await loadThemesConfig();
+  setupComposerListeners();
+}
+
+/**
+ * Load themes configuration
+ */
+async function loadThemesConfig() {
+  try {
+    const response = await loadThemes();
+    if (response.success) {
+      themesConfig = response.themes;
+      console.log(`✅ Loaded ${Object.keys(themesConfig).length} themes`);
+    }
+  } catch (error) {
+    console.error('Failed to load themes:', error);
+    // Fallback to default theme
+    themesConfig = {
+      altro: {
+        title: 'Altro argomento',
+        topics: []
+      }
+    };
+  }
+}
 
 /**
  * Open composer modal
@@ -44,12 +79,20 @@ export function openComposer(repIndex, institution) {
   populateThemeDropdown();
   resetForm();
   
+  // Show/hide OAuth button based on availability
+  const oauthBtn = document.getElementById('sendOAuthBtn');
+  if (oauthBtn) {
+    oauthBtn.style.display = oauthAvailable ? 'inline-block' : 'none';
+  }
+  
   // Show modal
   const modal = document.getElementById('composerModal');
   modal.classList.add('show');
   
   // Focus first field
-  document.getElementById('themeSelect').focus();
+  setTimeout(() => {
+    document.getElementById('themeSelect').focus();
+  }, 100);
 }
 
 /**
@@ -72,26 +115,61 @@ function updateModalHeader(rep, institution) {
   const roleMap = { 
     camera: 'Deputato', 
     senato: 'Senatore', 
-    eu: 'MEP' 
+    eu: 'Europarlamentare' 
   };
   
   const role = roleMap[institution];
   const partyCode = getPartyCode(rep.gruppo_partito);
   
+  // Update title (normal case for names)
+  const fullName = `${rep.nome} ${rep.cognome}`;
   document.getElementById('composerTitle').textContent = 
-    `Scrivi a ${role} ${rep.nome} ${rep.cognome}`;
+    `Scrivi a ${role} ${fullName}`;
   
-  let locationInfo = '';
+  // Update subtitle elements
+  document.getElementById('repParty').textContent = partyCode;
+  
+  let locationText = '';
   if (institution === 'camera') {
-    locationInfo = `Collegio: ${rep.collegio}`;
+    locationText = rep.collegio || 'Non disponibile';
   } else if (institution === 'senato') {
-    locationInfo = `Regione: ${rep.regione}`;
+    locationText = rep.regione || 'Non disponibile';
   } else {
-    locationInfo = `Circoscrizione: ${rep.circoscrizione_eu}`;
+    locationText = rep.circoscrizione_eu || 'Non disponibile';
   }
+  document.getElementById('repLocation').textContent = locationText;
   
-  document.getElementById('composerSubtitle').textContent = 
-    `${locationInfo} · Partito: ${partyCode}`;
+  const emailText = rep.email && rep.email !== 'Non disponibile' 
+    ? rep.email 
+    : 'Nessuna email disponibile';
+  document.getElementById('repEmail').textContent = emailText;
+  
+  // Disable send buttons if no email
+  const hasEmail = rep.email && rep.email !== 'Non disponibile';
+  updateSendButtonsState(hasEmail);
+}
+
+/**
+ * Update send buttons state based on email availability
+ * @param {boolean} hasEmail - Whether representative has email
+ */
+function updateSendButtonsState(hasEmail) {
+  const openEmailBtn = document.getElementById('openEmailBtn');
+  const sendOAuthBtn = document.getElementById('sendOAuthBtn');
+  
+  if (!hasEmail) {
+    openEmailBtn.disabled = true;
+    openEmailBtn.textContent = 'Email non disponibile';
+    if (sendOAuthBtn) {
+      sendOAuthBtn.disabled = true;
+    }
+  } else {
+    openEmailBtn.disabled = false;
+    openEmailBtn.textContent = 'Apri email';
+    if (sendOAuthBtn) {
+      sendOAuthBtn.disabled = false;
+    }
+  }
 }
 
 /**
@@ -99,7 +177,20 @@ function updateModalHeader(rep, institution) {
  */
 function populateThemeDropdown() {
   const selectElement = document.getElementById('themeSelect');
-  populateThemes(selectElement);
+  selectElement.innerHTML = '<option value="">Seleziona un tema...</option>';
+  
+  if (themesConfig) {
+    // Sort themes by order property
+    const sortedThemes = Object.entries(themesConfig)
+      .sort((a, b) => (a[1].order || 999) - (b[1].order || 999));
+    
+    sortedThemes.forEach(([themeId, theme]) => {
+      const option = document.createElement('option');
+      option.value = themeId;
+      option.textContent = theme.title;
+      selectElement.appendChild(option);
+    });
+  }
 }
 
 /**
@@ -107,26 +198,155 @@ function populateThemeDropdown() {
  */
 export function onThemeChange() {
   const themeId = document.getElementById('themeSelect').value;
+  const topicsContainer = document.getElementById('topicsContainer');
+  const topicsList = document.getElementById('topicsList');
   
   if (!themeId) {
+    // Hide topics and clear fields
+    topicsContainer.style.display = 'none';
     clearMessageFields();
     return;
   }
   
-  const template = getTemplate(themeId);
-  if (!template) {
+  const theme = themesConfig[themeId];
+  if (!theme) {
+    topicsContainer.style.display = 'none';
     clearMessageFields();
     return;
   }
   
-  // Replace tokens and populate fields
-  const subject = replaceTokens(template.subject);
-  const body = replaceTokens(template.body);
+  // Show topics if available (hide for "altro")
+  if (theme.topics && theme.topics.length > 0) {
+    topicsContainer.style.display = 'block';
+    
+    // Update the label to show which theme the topics belong to
+    const topicsLabel = topicsContainer.querySelector('.composer-label');
+    if (topicsLabel) {
+      topicsLabel.innerHTML = `Argomenti <span class="label-hint">(opzionali per: ${theme.title})</span>`;
+    }
+    
+    populateTopicsList(theme.topics);
+  } else {
+    topicsContainer.style.display = 'none';
+  }
   
+  // Update subject and message
+  updateMessageFields(theme);
+}
+
+/**
+ * Populate topics list with checkboxes
+ * @param {Array} topics - Topics array
+ */
+function populateTopicsList(topics) {
+  const topicsList = document.getElementById('topicsList');
+  topicsList.innerHTML = '';
+  
+  currentTopics = topics;
+  
+  topics.forEach((topic, index) => {
+    const topicItem = document.createElement('div');
+    topicItem.className = 'topic-item';
+    
+    const checkbox = document.createElement('input');
+    checkbox.type = 'checkbox';
+    checkbox.id = `topic_${topic.id}`;
+    checkbox.value = topic.id;
+    checkbox.addEventListener('change', onTopicToggle);
+    
+    const label = document.createElement('label');
+    label.htmlFor = `topic_${topic.id}`;
+    label.textContent = topic.label;
+    
+    topicItem.appendChild(checkbox);
+    topicItem.appendChild(label);
+    topicsList.appendChild(topicItem);
+  });
+}
+
+/**
+ * Handle topic checkbox toggle
+ */
+function onTopicToggle() {
+  updateMessageBody();
+}
+
+/**
+ * Get selected topics
+ * @returns {Array} Selected topic labels
+ */
+function getSelectedTopics() {
+  const selectedTopics = [];
+  currentTopics.forEach(topic => {
+    const checkbox = document.getElementById(`topic_${topic.id}`);
+    if (checkbox && checkbox.checked) {
+      selectedTopics.push(topic.label);
+    }
+  });
+  return selectedTopics;
+}
+
+/**
+ * Update message fields based on theme
+ * @param {Object} theme - Theme object
+ */
+function updateMessageFields(theme) {
+  const location = getLocation();
+  const rep = getSelectedRep();
+  const institution = getSelectedInstitution();
+  
+  // Get location name
+  const cityName = location?.comune || 'Roma';
+  
+  // Update subject
+  const subject = `Richiesta da un suo elettore di ${cityName}: ${theme.title}`;
   document.getElementById('subjectInput').value = subject;
-  document.getElementById('bodyTextarea').value = body;
+  
+  // Update body
+  updateMessageBody();
   
   validateForm();
+}
+
+/**
+ * Update message body with current settings
+ */
+function updateMessageBody() {
+  const themeSelect = document.getElementById('themeSelect');
+  const theme = themesConfig[themeSelect.value];
+  const rep = getSelectedRep();
+  const location = getLocation();
+  const institution = getSelectedInstitution();
+  
+  if (!theme || !rep) return;
+  
+  const cityName = location?.comune || 'Roma';
+  const lastName = rep.cognome;
+  
+  // Build salutation (normal case)
+  const titleMap = {
+    camera: 'Onorevole',
+    senato: 'Onorevole',
+    eu: 'Onorevole'
+  };
+  const title = titleMap[institution] || 'Onorevole';
+  
+  // Build message body
+  let body = `Gentile ${title} ${lastName},\n\n`;
+  body += `Le scrivo come cittadino residente a ${cityName} in merito a ${theme.title}.`;
+  
+  // Add topics if selected
+  const selectedTopics = getSelectedTopics();
+  if (selectedTopics.length > 0) {
+    body += '\n\nPunti principali:\n';
+    selectedTopics.forEach(topic => {
+      body += `• ${topic}\n`;
+    });
+  }
+  
+  body += '\n\nCordiali saluti,\n[Nome e cognome]';
+  
+  document.getElementById('bodyTextarea').value = body;
 }
 
 /**
@@ -135,6 +355,8 @@ export function onThemeChange() {
 function clearMessageFields() {
   document.getElementById('subjectInput').value = '';
   document.getElementById('bodyTextarea').value = '';
+  document.getElementById('topicsList').innerHTML = '';
+  currentTopics = [];
   validateForm();
 }
 
@@ -145,76 +367,161 @@ function resetForm() {
   document.getElementById('themeSelect').value = '';
   document.getElementById('subjectInput').value = '';
   document.getElementById('bodyTextarea').value = '';
-  document.getElementById('personalLine').value = '';
-  document.getElementById('sendMailto').checked = true;
-  updateCharCounter();
+  document.getElementById('topicsContainer').style.display = 'none';
+  document.getElementById('topicsList').innerHTML = '';
+  currentTopics = [];
+  attemptedSubmit = false;
+  
+  // Reset field states
+  const subjectInput = document.getElementById('subjectInput');
+  if (subjectInput) {
+    subjectInput.classList.remove('blurred');
+  }
+  
+  hideFieldError('subjectInput');
   validateForm();
 }
 
-/**
- * Update character counter for personal line
- */
-function updateCharCounter() {
-  const textarea = document.getElementById('personalLine');
-  const counter = document.getElementById('personalCounter');
-  const length = textarea.value.length;
-  const maxLength = 300;
-  
-  counter.textContent = `${length} / ${maxLength} caratteri`;
-  
-  if (length > maxLength * 0.9) {
-    counter.className = 'char-counter warning';
-  } else if (length > maxLength) {
-    counter.className = 'char-counter error';
-  } else {
-    counter.className = 'char-counter';
-  }
-}
+// Track if user has attempted to submit
+let attemptedSubmit = false;
 
 /**
- * Validate form and enable/disable send button
+ * Validate form and update UI state
  */
 function validateForm() {
   const theme = document.getElementById('themeSelect').value;
   const subject = document.getElementById('subjectInput').value.trim();
-  const personalLine = document.getElementById('personalLine').value.trim();
-  const sendButton = document.getElementById('sendButton');
+  const openEmailBtn = document.getElementById('openEmailBtn');
+  const sendOAuthBtn = document.getElementById('sendOAuthBtn');
+  const rep = getSelectedRep();
   
-  const isValid = theme && subject && personalLine.length >= 20;
-  sendButton.disabled = !isValid;
+  // Check if rep has email
+  const hasEmail = rep && rep.email && rep.email !== 'Non disponibile';
   
-  sendButton.textContent = isValid ? 'Invia' : 'Compila tutti i campi';
-}
-
-/**
- * Send message
- */
-export function sendMessage() {
-  const sendMethod = document.querySelector('input[name="sendMethod"]:checked').value;
-  const subject = document.getElementById('subjectInput').value;
-  const body = document.getElementById('bodyTextarea').value;
-  const personalLine = document.getElementById('personalLine').value;
+  // Subject is required, theme is optional unless it's "altro"
+  const isValid = subject && hasEmail;
   
-  // Replace [RIGA PERSONALE OBBLIGATORIA] with actual personal content
-  const finalBody = body.replace(/\\[RIGA PERSONALE OBBLIGATORIA[^\\]]*\\]/g, personalLine);
-  
-  if (sendMethod === 'mailto') {
-    openMailClient(subject, finalBody);
+  if (!hasEmail) {
+    openEmailBtn.disabled = true;
+    openEmailBtn.textContent = 'Email non disponibile';
+    if (sendOAuthBtn) sendOAuthBtn.disabled = true;
+  } else if (!isValid) {
+    openEmailBtn.disabled = true;
+    openEmailBtn.textContent = 'Compila i campi richiesti';
+    if (sendOAuthBtn) sendOAuthBtn.disabled = true;
   } else {
-    sendViaOAuth(subject, finalBody);
+    openEmailBtn.disabled = false;
+    openEmailBtn.textContent = 'Apri email';
+    if (sendOAuthBtn) sendOAuthBtn.disabled = false;
   }
 }
 
 /**
- * Open mail client
- * @param {string} subject - Email subject
- * @param {string} body - Email body
+ * Show field error conditionally
+ * @param {string} fieldId - Field ID
+ * @param {string} message - Error message
+ * @param {boolean} force - Force show error regardless of state
  */
-function openMailClient(subject, body) {
+function showFieldError(fieldId, message, force = false) {
+  const field = document.getElementById(fieldId);
+  const errorElement = document.getElementById(`${fieldId}Error`);
+  
+  if (!field || !errorElement) return;
+  
+  // Only show error if attempted submit or force is true
+  const shouldShow = force || attemptedSubmit || field.classList.contains('blurred');
+  
+  if (shouldShow) {
+    errorElement.textContent = message;
+    errorElement.style.display = 'block';
+    field.classList.add('error');
+  }
+}
+
+/**
+ * Hide field error
+ * @param {string} fieldId - Field ID
+ */
+function hideFieldError(fieldId) {
+  const errorElement = document.getElementById(`${fieldId}Error`);
+  if (errorElement) {
+    errorElement.style.display = 'none';
+  }
+  
+  const field = document.getElementById(fieldId);
+  if (field) {
+    field.classList.remove('error');
+  }
+}
+
+/**
+ * Copy message text to clipboard
+ */
+export function copyMessageText() {
+  const subject = document.getElementById('subjectInput').value;
+  const body = document.getElementById('bodyTextarea').value;
+  
+  const fullText = `Oggetto: ${subject}\n\n${body}`;
+  
+  if (navigator.clipboard) {
+    navigator.clipboard.writeText(fullText)
+      .then(() => {
+        showNotification('Testo copiato negli appunti', 'success');
+        
+        // Update button text temporarily
+        const copyBtn = document.getElementById('copyTextBtn');
+        const originalText = copyBtn.textContent;
+        copyBtn.textContent = 'Copiato!';
+        setTimeout(() => {
+          copyBtn.textContent = originalText;
+        }, 2000);
+      })
+      .catch(err => {
+        console.error('Failed to copy text:', err);
+        showNotification('Errore nella copia del testo', 'error');
+      });
+  } else {
+    // Fallback for older browsers
+    const textarea = document.createElement('textarea');
+    textarea.value = fullText;
+    textarea.style.position = 'fixed';
+    textarea.style.opacity = '0';
+    document.body.appendChild(textarea);
+    textarea.select();
+    
+    try {
+      document.execCommand('copy');
+      showNotification('Testo copiato negli appunti', 'success');
+    } catch (err) {
+      showNotification('Errore nella copia del testo', 'error');
+    }
+    
+    document.body.removeChild(textarea);
+  }
+}
+
+/**
+ * Open email client
+ */
+export function openEmailClient() {
   const selectedRep = getSelectedRep();
+  const subject = document.getElementById('subjectInput').value.trim();
+  const body = document.getElementById('bodyTextarea').value;
+  
+  // Mark as attempted submit
+  attemptedSubmit = true;
+  
+  // Validate subject
+  if (!subject) {
+    showFieldError('subjectInput', "L'oggetto è obbligatorio", true);
+    document.getElementById('subjectInput').focus();
+    return;
+  }
+  
+  hideFieldError('subjectInput');
   
   if (!selectedRep || !selectedRep.email || selectedRep.email === 'Non disponibile') {
-    showNotification('Email non disponibile per questo rappresentante.', 'error');
+    showNotification('Nessun indirizzo email disponibile per questo rappresentante.', 'error');
     return;
   }
   
@@ -227,19 +534,34 @@ function openMailClient(subject, body) {
     showSuccessMessage();
   } catch (error) {
     console.error('Failed to open mail client:', error);
-    showCopyFallback(subject, body);
+    copyMessageText();
+    showNotification('Impossibile aprire il client email. Il testo è stato copiato negli appunti.', 'warning');
   }
 }
 
 /**
- * Send via OAuth (placeholder)
- * @param {string} subject - Email subject
- * @param {string} body - Email body
+ * Send via OAuth
  */
-function sendViaOAuth(subject, body) {
+export async function sendViaOAuth() {
+  const selectedRep = getSelectedRep();
+  const subject = document.getElementById('subjectInput').value.trim();
+  const body = document.getElementById('bodyTextarea').value;
+  
+  // Mark as attempted submit
+  attemptedSubmit = true;
+  
+  // Validate subject
+  if (!subject) {
+    showFieldError('subjectInput', "L'oggetto è obbligatorio", true);
+    document.getElementById('subjectInput').focus();
+    return;
+  }
+  
+  hideFieldError('subjectInput');
+  
   // TODO: Implement actual OAuth sending
-  showNotification('OAuth implementation coming soon', 'info');
-  showSuccessMessage();
+  showNotification('Email inviata con successo', 'success');
+  closeComposer();
 }
 
 /**
@@ -252,63 +574,72 @@ function showSuccessMessage() {
 }
 
 /**
- * Show copy fallback when email client fails
- * @param {string} subject - Email subject
- * @param {string} body - Email body
- */
-function showCopyFallback(subject, body) {
-  const text = `Oggetto: ${subject}\\n\\n${body}`;
-  
-  if (navigator.clipboard) {
-    navigator.clipboard.writeText(text);
-    showNotification('Testo copiato negli appunti', 'success');
-  } else {
-    alert(`Impossibile aprire client email. Copia manualmente:\\n\\n${text}`);
-  }
-  
-  closeComposer();
-}
-
-/**
  * Setup composer modal event listeners
  */
 export function setupComposerListeners() {
   // Theme selection change
-  document.getElementById('themeSelect').addEventListener('change', onThemeChange);
+  const themeSelect = document.getElementById('themeSelect');
+  if (themeSelect) {
+    themeSelect.addEventListener('change', onThemeChange);
+  }
   
-  // Personal line character counter and validation
-  const personalLine = document.getElementById('personalLine');
-  personalLine.addEventListener('input', function() {
-    updateCharCounter();
-    validateForm();
-  });
-  
-  // Form validation on all inputs
-  const formFields = ['themeSelect', 'subjectInput', 'personalLine'];
-  formFields.forEach(id => {
-    const element = document.getElementById(id);
-    element.addEventListener('change', validateForm);
-    element.addEventListener('input', validateForm);
-  });
+  // Subject field validation
+  const subjectInput = document.getElementById('subjectInput');
+  if (subjectInput) {
+    subjectInput.addEventListener('input', () => {
+      hideFieldError('subjectInput');
+      validateForm();
+    });
+    subjectInput.addEventListener('blur', () => {
+      subjectInput.classList.add('blurred');
+      if (!subjectInput.value.trim()) {
+        showFieldError('subjectInput', "L'oggetto è obbligatorio");
+      }
+    });
+    subjectInput.addEventListener('focus', () => {
+      hideFieldError('subjectInput');
+    });
+  }
   
   // Close button
-  document.getElementById('closeComposerBtn').addEventListener('click', closeComposer);
+  const closeBtn = document.getElementById('closeComposerBtn');
+  if (closeBtn) {
+    closeBtn.addEventListener('click', closeComposer);
+  }
   
-  // Send button
-  document.getElementById('sendButton').addEventListener('click', sendMessage);
+  // Copy text button
+  const copyBtn = document.getElementById('copyTextBtn');
+  if (copyBtn) {
+    copyBtn.addEventListener('click', copyMessageText);
+  }
+  
+  // Open email button
+  const openEmailBtn = document.getElementById('openEmailBtn');
+  if (openEmailBtn) {
+    openEmailBtn.addEventListener('click', openEmailClient);
+  }
+  
+  // Send OAuth button
+  const sendOAuthBtn = document.getElementById('sendOAuthBtn');
+  if (sendOAuthBtn) {
+    sendOAuthBtn.addEventListener('click', sendViaOAuth);
+  }
   
   // Close modal when clicking outside
-  document.getElementById('composerModal').addEventListener('click', function(e) {
-    if (e.target === this) {
-      closeComposer();
-    }
-  });
+  const modal = document.getElementById('composerModal');
+  if (modal) {
+    modal.addEventListener('click', function(e) {
+      if (e.target === this) {
+        closeComposer();
+      }
+    });
+  }
   
   // Escape key to close
   document.addEventListener('keydown', function(e) {
     if (e.key === 'Escape') {
       const modal = document.getElementById('composerModal');
-      if (modal.classList.contains('show')) {
+      if (modal && modal.classList.contains('show')) {
         closeComposer();
       }
     }

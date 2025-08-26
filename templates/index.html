@@ -35,58 +35,66 @@
     </div>
     
     <!-- Message Composer Modal -->
-    <div id="composerModal" class="composer-modal">
+    <div id="composerModal" class="composer-modal" role="dialog" aria-modal="true" aria-labelledby="composerTitle">
         <div class="composer-content">
             <div class="composer-header">
+                <button type="button" class="close-btn" id="closeComposerBtn" aria-label="Chiudi">&times;</button>
                 <h2 id="composerTitle" class="composer-title">Scrivi a [Nome Cognome]</h2>
-                <p id="composerSubtitle" class="composer-subtitle">Partito: [sigla] • Collegio: [label]<br>Email: [email]</p>
+                <div id="composerSubtitle" class="composer-subtitle">
+                    <span class="subtitle-party">Partito: <span id="repParty"></span></span>
+                    <span class="subtitle-separator">•</span>
+                    <span class="subtitle-location">Collegio: <span id="repLocation"></span></span>
+                    <span class="subtitle-separator">•</span>
+                    <span class="subtitle-email">Email: <span id="repEmail"></span></span>
+                </div>
             </div>
             
             <div class="composer-body">
-                <!-- Theme Selection -->
-                <div class="composer-field">
-                    <label class="composer-label required" for="themeSelect">Tema</label>
-                    <select id="themeSelect" class="composer-select" required>
-                        <option value="">Seleziona un tema...</option>
-                    </select>
-                </div>
+                <form class="composer-form">
+                    <!-- Theme Selection -->
+                    <div class="form-group">
+                        <label class="composer-label" for="themeSelect">Tema</label>
+                        <select id="themeSelect" class="field select" aria-required="true">
+                            <option value="">Seleziona un tema...</option>
+                            <option value="altro">Altro argomento</option>
+                        </select>
+                    </div>
                 
-                <!-- Subject -->
-                <div class="composer-field">
-                    <label class="composer-label required" for="subjectInput">Oggetto</label>
-                    <input type="text" id="subjectInput" class="composer-input" required>
-                </div>
-                
-                <!-- Message Body -->
-                <div class="composer-field">
-                    <label class="composer-label required" for="bodyTextarea">Messaggio</label>
-                    <textarea id="bodyTextarea" class="composer-textarea" rows="8"></textarea>
-                </div>
-                
-                <!-- Send Method -->
-                <div class="composer-field send-method">
-                    <label class="composer-label">Metodo di invio</label>
-                    <div class="radio-group">
-                        <div class="radio-option">
-                            <input type="radio" id="sendMailto" name="sendMethod" value="mailto" checked>
-                            <label for="sendMailto">Apri nel mio client email (Outlook, Gmail...)</label>
-                        </div>
-                        <div class="radio-option">
-                            <input type="radio" id="sendOAuth" name="sendMethod" value="oauth">
-                            <label for="sendOAuth">Invia tramite Civic Bridge (OAuth Gmail/Outlook)</label>
+                    <!-- Topics (conditional) -->
+                    <div id="topicsContainer" class="form-group" style="display: none;">
+                        <label class="composer-label">Argomenti <span class="label-hint">(opzionali)</span></label>
+                        <div id="topicsList" class="topics-list" role="group" aria-label="Argomenti disponibili">
+                            <!-- Topics checkboxes will be dynamically inserted here -->
                         </div>
                     </div>
-                </div>
+                
+                    <!-- Subject -->
+                    <div class="form-group">
+                        <label class="composer-label required" for="subjectInput">Oggetto</label>
+                        <input type="text" id="subjectInput" class="field input" aria-required="true" aria-describedby="subjectError">
+                        <span id="subjectError" class="field-error" role="alert" style="display: none;">L'oggetto è obbligatorio</span>
+                    </div>
+                
+                    <!-- Message Body -->
+                    <div class="form-group">
+                        <label class="composer-label" for="bodyTextarea">Messaggio</label>
+                        <textarea id="bodyTextarea" class="field textarea" rows="12" aria-describedby="bodyHint"></textarea>
+                        <span id="bodyHint" class="field-hint">Il messaggio verrà generato automaticamente in base al tema selezionato</span>
+                    </div>
+                </form>
             </div>
             
             <div class="composer-footer">
-                <div class="footer-note">Non salviamo il testo della tua email.</div>
+                <div class="footer-info">
+                    <svg width="16" height="16" viewBox="0 0 16 16" class="info-icon">
+                        <path fill="currentColor" d="M8 0C3.58 0 0 3.58 0 8s3.58 8 8 8 8-3.58 8-8-3.58-8-8-8zm1 13H7v-2h2v2zm0-3H7V3h2v7z"/>
+                    </svg>
+                    <span>Non salviamo il testo della tua email.</span>
+                </div>
                 <div class="footer-buttons">
                     <button type="button" class="btn-secondary" id="copyTextBtn">Copia testo</button>
-                    <button type="button" class="btn-secondary" id="closeComposerBtn">Annulla</button>
-                    <button type="button" id="sendButton" class="btn-primary">
-                        Apri email
-                    </button>
+                    <button type="button" class="btn-primary" id="openEmailBtn">Apri email</button>
+                    <button type="button" class="btn-primary oauth-btn" id="sendOAuthBtn" style="display: none;">Invia con Civic Bridge</button>
                 </div>
             </div>
         </div>

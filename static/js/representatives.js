@@ -5,7 +5,7 @@
 
 import { getRepresentatives } from './state.js';
 import { getPartyCode, debounce } from './utils.js';
-import { openComposerModal } from './composer-new.js';
+import { openComposer } from './composer.js';
 
 /**
  * Create and setup live region for screen readers
@@ -210,7 +210,7 @@ function setupContactButtonListeners(container) {
       const institution = contactBtn.dataset.institution;
       
       // Open composer modal with this specific recipient
-      openComposerModal(repIndex, institution);
+      openComposer(repIndex, institution);
     }
   });
 }
