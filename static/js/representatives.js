@@ -4,7 +4,7 @@
  */
 
 import { getRepresentatives } from './state.js';
-import { getPartyCode, debounce } from './utils.js';
+import { getPartyCode, getFullPartyName, isPartyMatch, debounce } from './utils.js';
 import { openComposer } from './composer.js';
 
 /**
@@ -156,6 +156,7 @@ function renderInstitutionSection(institutionKey, title, icon, representatives, 
  */
 function renderRepresentativeCard(rep, index, institution) {
   const partyCode = getPartyCode(rep.gruppo_partito);
+  const fullPartyName = getFullPartyName(rep.gruppo_partito);
   
   let roleText = '';
   let locationInfo = '';
@@ -178,7 +179,7 @@ function renderRepresentativeCard(rep, index, institution) {
   const isDisabled = (!rep.email || rep.email === 'Non disponibile');
   
   return `
-    <div class="representative" data-institution="${institution}" data-rep-id="rep-${institution}-${index}" role="article" aria-labelledby="rep-name-${institution}-${index}">
+    <div class="representative" data-institution="${institution}" data-rep-id="rep-${institution}-${index}" data-party-full="${fullPartyName}" role="article" aria-labelledby="rep-name-${institution}-${index}">
       <div class="rep-info">
         <div id="rep-name-${institution}-${index}" class="rep-name">${rep.nome} ${rep.cognome}</div>
         <div class="rep-details">${roleText} • ${partyCode}</div>
@@ -582,15 +583,18 @@ function performSearch(query) {
     const nameElement = rep.querySelector('.rep-name');
     const detailsElement = rep.querySelector('.rep-details'); 
     const locationElement = rep.querySelector('.rep-location');
+    const fullPartyName = rep.dataset.partyFull;
     
     if (nameElement && detailsElement && locationElement) {
       const name = nameElement.textContent.toLowerCase();
       const details = detailsElement.textContent.toLowerCase();
       const location = locationElement.textContent.toLowerCase();
       
+      // Enhanced matching with party names
       const matches = name.includes(lowerQuery) || 
                      details.includes(lowerQuery) || 
-                     location.includes(lowerQuery);
+                     location.includes(lowerQuery) ||
+                     isPartyMatch(query, fullPartyName);
       
       // Only show if matches search AND passes current tab filter
       const activeTab = document.querySelector('.tab-btn.active');
