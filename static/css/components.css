@@ -1126,6 +1126,68 @@
     font-weight: 500 !important;
 }
 
+/* Identity Selection Styles */
+.identity-options {
+    display: flex;
+    gap: 20px;
+    margin-top: 8px;
+}
+
+.identity-option {
+    display: flex;
+    align-items: flex-start;
+    position: relative;
+}
+
+.identity-radio {
+    margin: 0;
+    margin-right: 8px;
+    margin-top: 2px;
+    flex-shrink: 0;
+}
+
+.identity-radio:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+.identity-label {
+    font-size: 14px;
+    font-weight: 400;
+    color: #374151;
+    cursor: pointer;
+    margin: 0;
+    line-height: 1.4;
+    display: flex;
+    align-items: flex-start;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.identity-radio:disabled + .identity-label {
+    color: #9ca3af;
+    cursor: not-allowed;
+}
+
+.identity-tooltip {
+    font-size: 12px;
+    color: #6b7280;
+    font-style: italic;
+    max-width: 200px;
+    line-height: 1.3;
+}
+
+@media (max-width: 768px) {
+    .identity-options {
+        flex-direction: column;
+        gap: 12px;
+    }
+    
+    .identity-tooltip {
+        max-width: none;
+    }
+}
+
 .topic-item label,
 .checkbox-group label {
     font-weight: 400 !important;

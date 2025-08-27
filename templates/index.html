@@ -51,6 +51,26 @@
             
             <div class="composer-body">
                 <form class="composer-form">
+                    <!-- Sender Identity Selection -->
+                    <div class="form-group">
+                        <label class="composer-label">Mi presento come</label>
+                        <div class="identity-options" role="radiogroup" aria-labelledby="identityLabel">
+                            <div class="identity-option">
+                                <input type="radio" id="identityElettore" name="senderIdentity" value="elettore" class="identity-radio">
+                                <label for="identityElettore" class="identity-label">
+                                    Elettore
+                                    <span id="elettoreTooltip" class="identity-tooltip" style="display: none;">
+                                        Disponibile solo se il tuo Comune rientra nel collegio del rappresentante.
+                                    </span>
+                                </label>
+                            </div>
+                            <div class="identity-option">
+                                <input type="radio" id="identityCittadino" name="senderIdentity" value="cittadino" class="identity-radio" checked>
+                                <label for="identityCittadino" class="identity-label">Cittadino</label>
+                            </div>
+                        </div>
+                    </div>
+                
                     <!-- Theme Selection -->
                     <div class="form-group">
                         <label class="composer-label" for="themeSelect">Tema</label>
