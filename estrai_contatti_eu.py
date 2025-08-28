@@ -109,6 +109,10 @@ def main(output_csv):
         nome = " ".join(name_parts[:-1]) if len(name_parts) > 1 else ""
         cognome = name_parts[-1] if name_parts else ""
         
+        # Generate photo URL - MEP photos use a generic pattern
+        # Since we don't have actual MEP IDs, we'll use a placeholder that could be enhanced later
+        photo_url = ""  # Would be f"https://www.europarl.europa.eu/mepphoto/{mep_id}.jpg" with real IDs
+        
         results.append({
             "persona_id": f"eu_mep_{i+1}",
             "nome": nome,
@@ -122,6 +126,7 @@ def main(output_csv):
             "form_contatti_url": "https://www.europarl.europa.eu/meps/en/contact",
             "telefono_e164": "",
             "indirizzo_ufficio": "",
+            "photo_url": photo_url,
             "sito_ufficiale": "https://www.europarl.europa.eu",
             "fonte_url": "https://www.europarl.europa.eu/meps/en/search/advanced",
             "fonte_data": today
@@ -133,7 +138,7 @@ def main(output_csv):
         writer = csv.DictWriter(f, fieldnames=[
             "persona_id","nome","cognome","carica","gruppo_partito","circoscrizione_eu","regioni_rappresentate",
             "email_istituzionale","email_pec","form_contatti_url",
-            "telefono_e164","indirizzo_ufficio","sito_ufficiale","fonte_url","fonte_data"
+            "telefono_e164","indirizzo_ufficio","photo_url","sito_ufficiale","fonte_url","fonte_data"
         ])
         writer.writeheader()
         for r in results:

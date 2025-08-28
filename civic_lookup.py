@@ -157,6 +157,7 @@ class CivicLookup:
                     'collegio': clean_for_json(deputato.get('collegio', '')),
                     'email': clean_for_json(deputato.get('email_istituzionale', '')),
                     'form_url': clean_for_json(deputato.get('form_contatti_url', '')),
+                    'photo_url': clean_for_json(deputato.get('photo_url', '')),
                     'istituzione': 'Camera dei Deputati'
                 })
         
@@ -179,6 +180,7 @@ class CivicLookup:
                     'regione': clean_for_json(senatore.get('regione', '')),
                     'email': clean_for_json(senatore.get('email_istituzionale', '')),
                     'sito_ufficiale': clean_for_json(senatore.get('sito_ufficiale', '')),
+                    'photo_url': clean_for_json(senatore.get('photo_url', '')),
                     'istituzione': 'Senato della Repubblica'
                 })
         
@@ -210,6 +212,7 @@ class CivicLookup:
                     'circoscrizione_eu': clean_for_json(mep.get('circoscrizione_eu', '')),
                     'email': clean_for_json(mep.get('email_istituzionale', '')),
                     'form_url': clean_for_json(mep.get('form_contatti_url', '')),
+                    'photo_url': clean_for_json(mep.get('photo_url', '')),
                     'istituzione': 'Parlamento Europeo'
                 })
         

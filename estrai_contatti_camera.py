@@ -58,6 +58,10 @@ def main(input_csv, output_csv, start=0, end=None, rps=1.0):
             
         processed_ids.add(persona_id)
         email, form_url = fetch_email_from_form(persona_id)
+        
+        # Camera photos are not publicly accessible via predictable URLs
+        photo_url = ""
+        
         results.append({
             "persona_id": persona_id,
             "nome": row.get("nome", "").strip(),
@@ -74,6 +78,7 @@ def main(input_csv, output_csv, start=0, end=None, rps=1.0):
             "form_contatti_url": form_url,
             "telefono_e164": "",
             "indirizzo_ufficio": "",
+            "photo_url": photo_url,
             "sito_ufficiale": row.get("pagina", ""),
             "fonte_url": form_url,
             "fonte_data": today
@@ -86,7 +91,7 @@ def main(input_csv, output_csv, start=0, end=None, rps=1.0):
             "persona_id","nome","cognome","data_nascita","luogo_nascita","genere",
             "collegio","gruppo_partito","sigla_gruppo","commissione",
             "email_istituzionale","email_pec","form_contatti_url",
-            "telefono_e164","indirizzo_ufficio","sito_ufficiale","fonte_url","fonte_data"
+            "telefono_e164","indirizzo_ufficio","photo_url","sito_ufficiale","fonte_url","fonte_data"
         ])
         writer.writeheader()
         for r in results:

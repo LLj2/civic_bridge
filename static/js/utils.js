@@ -66,9 +66,9 @@ const PARTY_MAPPINGS = {
   },
   'fratelli_ditalia': {
     abbreviation: 'FdI',
-    fullName: 'Fratelli d\'Italia',
-    searchKeywords: ['fdi', 'fratelli ditalia', 'fratelli d\'italia', 'meloni'],
-    variations: ['FRATELLI D\'ITALIA']
+    fullName: "Fratelli d'Italia",
+    searchKeywords: ['fdi', 'fratelli ditalia', "fratelli d'italia", 'meloni'],
+    variations: ["FRATELLI D'ITALIA"]
   },
   'italia_viva': {
     abbreviation: 'IV',
@@ -110,13 +110,29 @@ const PARTY_MAPPINGS = {
 export function getPartyCode(party) {
   if (!party) return '';
   
+  // Handle Senate-specific party codes
+  const senateMapping = {
+    'PD-IDP': 'PD',           // Partito Democratico
+    'FI-BP-PPE': 'FI',         // Forza Italia
+    'LSP-PS': 'Lega',          // Lega
+    'M5S': 'M5S',              // Movimento 5 Stelle
+    'F': 'FdI',                // Fratelli d'Italia
+    'IV-C-RE': 'IV',           // Italia Viva
+    'M': 'Misto',              // Gruppo Misto
+    'A': 'Aut',                // Autonomie
+    'C': 'CI'                  // Centro/Civici
+  };
+  
+  // Check if it's a Senate party code first
+  if (senateMapping[party]) return senateMapping[party];
+  
   // First try exact match with existing logic for backward compatibility
   const exactMatches = {
     'Partito Democratico': 'PD',
     'Lega': 'Lega',
     'Movimento 5 Stelle': 'M5S',
     'Forza Italia': 'FI',
-    'Fratelli d\'Italia': 'FdI',
+    "Fratelli d'Italia": 'FdI',
     'Italia Viva': 'IV',
     'Azione': 'Az',
     'Più Europa': '+Eu',
@@ -152,6 +168,22 @@ export function getPartyCode(party) {
 export function getFullPartyName(party) {
   if (!party) return '';
   
+  // Handle Senate-specific party codes
+  const senateToFullName = {
+    'PD-IDP': 'Partito Democratico',
+    'FI-BP-PPE': 'Forza Italia',
+    'LSP-PS': 'Lega',
+    'M5S': 'Movimento 5 Stelle',
+    'F': "Fratelli d'Italia",
+    'IV-C-RE': 'Italia Viva',
+    'M': 'Misto',
+    'A': 'Autonomie',
+    'C': 'Centro'
+  };
+  
+  // Check if it's a Senate code first
+  if (senateToFullName[party]) return senateToFullName[party];
+  
   const partyStr = party.toString().toUpperCase();
   
   for (const [key, partyData] of Object.entries(PARTY_MAPPINGS)) {
@@ -184,7 +216,22 @@ export function isPartyMatch(query, partyName) {
   const queryLower = query.toLowerCase().trim();
   if (queryLower.length < 2) return false; // Avoid too short queries
   
-  const partyStr = partyName.toString().toUpperCase();
+  // Handle Senate-specific party codes first
+  const senateToFullName = {
+    'PD-IDP': 'Partito Democratico',
+    'FI-BP-PPE': 'Forza Italia', 
+    'LSP-PS': 'Lega',
+    'M5S': 'Movimento 5 Stelle',
+    'F': "Fratelli d'Italia",
+    'IV-C-RE': 'Italia Viva',
+    'M': 'Misto',
+    'A': 'Autonomie',
+    'C': 'Centro'
+  };
+  
+  // Convert Senate code to full name for matching
+  const fullPartyName = senateToFullName[partyName] || partyName;
+  const partyStr = fullPartyName.toString().toUpperCase();
   
   for (const [key, partyData] of Object.entries(PARTY_MAPPINGS)) {
     // Check if this partyName matches any of our known parties
@@ -202,8 +249,9 @@ export function isPartyMatch(query, partyName) {
     }
   }
   
-  // Fallback: simple string matching
-  return partyName.toLowerCase().includes(queryLower);
+  // Fallback: check against both original and full party name
+  return partyName.toLowerCase().includes(queryLower) || 
+         fullPartyName.toLowerCase().includes(queryLower);
 }
 
 /**
@@ -212,17 +260,39 @@ export function isPartyMatch(query, partyName) {
  * @returns {string} Hex color code
  */
 export function getPartyColor(party) {
-  const partyColors = {
-    'Partito Democratico': '#e53e3e',
-    'Lega': '#3182ce',
-    'Movimento 5 Stelle': '#f0ad4e',
-    'Forza Italia': '#3b82f6',
-    'Fratelli d\'Italia': '#0f172a',
-    'Italia Viva': '#8b5cf6',
-    'Azione': '#10b981',
-    'Più Europa': '#f59e0b'
+  // Handle Senate-specific party codes
+  const senateToFullName = {
+    'PD-IDP': 'Partito Democratico',
+    'FI-BP-PPE': 'Forza Italia',
+    'LSP-PS': 'Lega',
+    'M5S': 'Movimento 5 Stelle',
+    'F': "Fratelli d'Italia",
+    'IV-C-RE': 'Italia Viva',
+    'M': 'Misto',
+    'A': 'Autonomie',
+    'C': 'Centro'
   };
-  return partyColors[party] || '#6b7280';
+  
+  // Convert Senate code to full name if needed
+  const partyName = senateToFullName[party] || party;
+  
+  // WCAG AA compliant colors with sufficient contrast
+  const partyColors = {
+    'Partito Democratico': '#dc2626', // Red - high contrast
+    'Lega': '#1d4ed8', // Blue - high contrast  
+    'Movimento 5 Stelle': '#d97706', // Orange - high contrast
+    'Forza Italia': '#2563eb', // Blue - high contrast
+    "Fratelli d'Italia": '#1f2937', // Dark gray - high contrast
+    'Italia Viva': '#7c3aed', // Purple - high contrast
+    'Azione': '#059669', // Green - high contrast
+    'Più Europa': '#ea580c', // Orange - high contrast
+    'Alleanza Verdi e Sinistra': '#16a34a', // Green - high contrast
+    'Noi Moderati': '#4b5563', // Gray - high contrast
+    'Misto': '#6b7280', // Gray for mixed group
+    'Autonomie': '#0891b2', // Cyan
+    'Centro': '#0ea5e9' // Sky blue
+  };
+  return partyColors[partyName] || '#6b7280';
 }
 
 /**

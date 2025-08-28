@@ -109,13 +109,65 @@ def create_app(config_name=None):
             
             system = init_lookup()
             
-            # Autocomplete implementation - return all matching comuni up to limit
-            matching_comuni = system._comuni_cache[
-                system._comuni_cache['comune'].str.contains(query, case=False, na=False)
-            ].head(limit)
+            # Smart autocomplete with prioritized sorting
+            query_upper = query.upper()
+            comuni_df = system._comuni_cache.copy()
+            
+            # 1. Exact matches (highest priority)
+            exact_matches = comuni_df[comuni_df['comune'].str.upper() == query_upper]
+            
+            # 2. Starts with query (high priority)
+            starts_with = comuni_df[
+                (comuni_df['comune'].str.upper().str.startswith(query_upper)) &
+                (comuni_df['comune'].str.upper() != query_upper)  # Exclude exact matches
+            ]
+            
+            # 3. Contains query (lower priority)
+            starts_with_mask = comuni_df['comune'].str.upper().str.startswith(query_upper)
+            contains = comuni_df[
+                (comuni_df['comune'].str.upper().str.contains(query_upper, na=False)) &
+                (~starts_with_mask.fillna(False))  # Handle NaN values in mask
+            ]
+            
+            # Major cities get bonus points (appear higher in their respective groups)
+            major_cities = {'ROMA', 'MILANO', 'NAPOLI', 'TORINO', 'PALERMO', 'GENOVA', 'BOLOGNA', 
+                           'FIRENZE', 'BARI', 'CATANIA', 'VENEZIA', 'VERONA', 'MESSINA', 'PADOVA', 
+                           'TRIESTE', 'TARANTO', 'BRESCIA', 'PARMA', 'MODENA', 'REGGIO CALABRIA'}
+            
+            def sort_group(df_group):
+                """Sort a group with major cities first, then alphabetically"""
+                if df_group.empty:
+                    return df_group
+                
+                # Separate major cities from others
+                major = df_group[df_group['comune'].str.upper().isin(major_cities)]
+                others = df_group[~df_group['comune'].str.upper().isin(major_cities)]
+                
+                # Sort each group alphabetically, then concatenate
+                major_sorted = major.sort_values('comune') if not major.empty else major
+                others_sorted = others.sort_values('comune') if not others.empty else others
+                
+                return pd.concat([major_sorted, others_sorted], ignore_index=True)
+            
+            # Sort each group and combine with proper prioritization
+            exact_sorted = sort_group(exact_matches)
+            starts_sorted = sort_group(starts_with) 
+            contains_sorted = sort_group(contains)
+            
+            # Combine results: exact → starts_with → contains (handle empty DataFrames)
+            dfs_to_concat = [df for df in [exact_sorted, starts_sorted, contains_sorted] if not df.empty]
+            
+            if dfs_to_concat:
+                all_matches = pd.concat(dfs_to_concat, ignore_index=True)
+            else:
+                all_matches = pd.DataFrame()  # Empty DataFrame if no matches
+            
+            # Limit results to prevent overwhelming the UI (10-15 is usually optimal)
+            final_limit = min(limit, 15)
+            limited_matches = all_matches.head(final_limit)
             
             results = []
-            for _, row in matching_comuni.iterrows():
+            for _, row in limited_matches.iterrows():
                 results.append({
                     'comune': clean_for_json(row['comune']),
                     'provincia': clean_for_json(row['provincia']),

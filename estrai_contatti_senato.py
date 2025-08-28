@@ -38,6 +38,9 @@ def fetch_data_from_senate_page(sen_id: str):
         m = re.search(r"[a-zA-Z0-9._%+-]+@senato\.it", text, re.IGNORECASE)
         data["email"] = m.group(0).lower() if m else None
         
+        # Photo URL - standard pattern for Senate photos
+        data["photo_url"] = f"https://www.senato.it/leg/19/Immagini/Senatori/{sen_id:0>8}.jpg"
+        
         # Gruppo parlamentare - cerca "Membro Gruppo XXX"
         m = re.search(r"Membro Gruppo ([A-Z0-9-]+)", text)  # Solo sigla gruppo
         if not m:
@@ -111,6 +114,7 @@ def main(input_csv, output_csv, start=0, end=None, rps=1.0):
             "form_contatti_url": "",
             "telefono_e164": "",
             "indirizzo_ufficio": "",
+            "photo_url": data.get("photo_url", ""),
             "sito_ufficiale": fonte_url,
             "fonte_url": fonte_url,
             "fonte_data": today
@@ -124,7 +128,7 @@ def main(input_csv, output_csv, start=0, end=None, rps=1.0):
             "persona_id","nome","cognome","inizio_mandato","legislatura","tipo_mandato","carica",
             "gruppo_partito","circoscrizione_o_collegio","regione",
             "email_istituzionale","email_pec","form_contatti_url",
-            "telefono_e164","indirizzo_ufficio","sito_ufficiale","fonte_url","fonte_data"
+            "telefono_e164","indirizzo_ufficio","photo_url","sito_ufficiale","fonte_url","fonte_data"
         ])
         writer.writeheader()
         for r in results:

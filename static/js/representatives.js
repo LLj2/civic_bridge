@@ -4,7 +4,7 @@
  */
 
 import { getRepresentatives } from './state.js';
-import { getPartyCode, getFullPartyName, isPartyMatch, debounce } from './utils.js';
+import { getPartyCode, getFullPartyName, isPartyMatch, getPartyColor, debounce } from './utils.js';
 import { openComposer } from './composer.js';
 
 /**
@@ -148,6 +148,16 @@ function renderInstitutionSection(institutionKey, title, icon, representatives, 
 }
 
 /**
+ * Convert string to Title Case
+ * @param {string} str - String to convert
+ * @returns {string} Title case string
+ */
+function toTitleCase(str) {
+  if (!str) return '';
+  return str.toLowerCase().replace(/\b\w/g, l => l.toUpperCase());
+}
+
+/**
  * Render representative card HTML
  * @param {Object} rep - Representative data
  * @param {number} index - Representative index
@@ -157,6 +167,7 @@ function renderInstitutionSection(institutionKey, title, icon, representatives, 
 function renderRepresentativeCard(rep, index, institution) {
   const partyCode = getPartyCode(rep.gruppo_partito);
   const fullPartyName = getFullPartyName(rep.gruppo_partito);
+  const partyColor = getPartyColor(fullPartyName);
   
   let roleText = '';
   let locationInfo = '';
@@ -178,13 +189,72 @@ function renderRepresentativeCard(rep, index, institution) {
   
   const isDisabled = (!rep.email || rep.email === 'Non disponibile');
   
+  // Generate initials for fallback avatar
+  const initials = `${rep.nome?.charAt(0) || ''}${rep.cognome?.charAt(0) || ''}`.toUpperCase();
+  
+  // Generate muted party color for avatar background
+  const getMutedPartyColor = (hexColor) => {
+    // Convert hex to RGB
+    const r = parseInt(hexColor.slice(1, 3), 16);
+    const g = parseInt(hexColor.slice(3, 5), 16);
+    const b = parseInt(hexColor.slice(5, 7), 16);
+    
+    // Make it lighter and more muted (blend with white)
+    const factor = 0.15; // 15% of original color, 85% white
+    const mutedR = Math.round(r * factor + 255 * (1 - factor));
+    const mutedG = Math.round(g * factor + 255 * (1 - factor));
+    const mutedB = Math.round(b * factor + 255 * (1 - factor));
+    
+    return `rgb(${mutedR}, ${mutedG}, ${mutedB})`;
+  };
+  
+  const avatarBgColor = getMutedPartyColor(partyColor);
+  
+  // Determine if we have a photo
+  const hasPhoto = rep.photo_url && rep.photo_url.trim() !== '';
+  
+  // Calculate text color for party chip based on background contrast
+  const getContrastColor = (hexColor) => {
+    // Convert hex to RGB
+    const r = parseInt(hexColor.slice(1, 3), 16);
+    const g = parseInt(hexColor.slice(3, 5), 16);
+    const b = parseInt(hexColor.slice(5, 7), 16);
+    
+    // Calculate luminance
+    const luminance = (0.299 * r + 0.587 * g + 0.114 * b) / 255;
+    return luminance > 0.5 ? '#000000' : '#ffffff';
+  };
+  
+  const chipTextColor = getContrastColor(partyColor);
+  
   return `
-    <div class="representative" data-institution="${institution}" data-rep-id="rep-${institution}-${index}" data-party-full="${fullPartyName}" role="article" aria-labelledby="rep-name-${institution}-${index}">
+    <div class="representative" 
+         data-institution="${institution}" 
+         data-rep-id="rep-${institution}-${index}" 
+         data-party-full="${fullPartyName}" 
+         role="article" 
+         aria-labelledby="rep-name-${institution}-${index}"
+         style="--party-color: ${partyColor}">
+      <div class="party-accent-bar"></div>
+      <div class="rep-photo-container">
+        <div class="rep-avatar" style="background: ${avatarBgColor}; color: #4a5568;">${initials}</div>
+        ${hasPhoto ? 
+          `<img class="rep-photo" 
+                src="${rep.photo_url}" 
+                alt="" 
+                loading="lazy"
+                data-rep-id="rep-${institution}-${index}">` : 
+          ''
+        }
+      </div>
       <div class="rep-info">
-        <div id="rep-name-${institution}-${index}" class="rep-name">${rep.nome} ${rep.cognome}</div>
-        <div class="rep-details">${roleText} • ${partyCode}</div>
+        <h3 id="rep-name-${institution}-${index}" class="rep-name">${toTitleCase(rep.nome)} ${toTitleCase(rep.cognome)}</h3>
+        <div class="rep-role-party">
+          <span class="rep-role">${roleText}</span> • 
+          <span class="party-chip" style="background-color: ${partyColor}; color: ${chipTextColor};">${partyCode}</span>
+        </div>
         <div class="rep-location">${locationInfo}</div>
-        <div class="rep-contact">${rep.email || 'Nessuna email disponibile'}</div>
+        <div class="rep-email">${rep.email || 'Nessuna email disponibile'}</div>
       </div>
       <div class="rep-actions">
         <button class="btn-contact-primary"
@@ -214,6 +284,13 @@ function setupContactButtonListeners(container) {
       openComposer(repIndex, institution);
     }
   });
+  
+  // Handle image load errors - hide broken images to show avatar underneath
+  container.addEventListener('error', function(event) {
+    if (event.target.classList.contains('rep-photo')) {
+      event.target.style.display = 'none';
+    }
+  }, true);
 }
 
 /**
@@ -581,19 +658,22 @@ function performSearch(query) {
   
   representatives.forEach(rep => {
     const nameElement = rep.querySelector('.rep-name');
-    const detailsElement = rep.querySelector('.rep-details'); 
+    const rolePartyElement = rep.querySelector('.rep-role-party'); 
     const locationElement = rep.querySelector('.rep-location');
+    const emailElement = rep.querySelector('.rep-email');
     const fullPartyName = rep.dataset.partyFull;
     
-    if (nameElement && detailsElement && locationElement) {
+    if (nameElement) {
       const name = nameElement.textContent.toLowerCase();
-      const details = detailsElement.textContent.toLowerCase();
-      const location = locationElement.textContent.toLowerCase();
+      const roleParty = rolePartyElement ? rolePartyElement.textContent.toLowerCase() : '';
+      const location = locationElement ? locationElement.textContent.toLowerCase() : '';
+      const email = emailElement ? emailElement.textContent.toLowerCase() : '';
       
       // Enhanced matching with party names
       const matches = name.includes(lowerQuery) || 
-                     details.includes(lowerQuery) || 
+                     roleParty.includes(lowerQuery) || 
                      location.includes(lowerQuery) ||
+                     email.includes(lowerQuery) ||
                      isPartyMatch(query, fullPartyName);
       
       // Only show if matches search AND passes current tab filter
