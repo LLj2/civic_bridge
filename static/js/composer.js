@@ -9,6 +9,7 @@ import { loadThemes } from './api.js';
 
 // Composer state
 let themesConfig = null;
+let templatesConfig = null;
 let currentTopics = [];
 let oauthAvailable = false;
 
@@ -164,15 +165,26 @@ async function loadThemesConfig() {
     const response = await loadThemes();
     if (response.success) {
       themesConfig = response.themes;
+      templatesConfig = response.templates;
       console.log(`✅ Loaded ${Object.keys(themesConfig).length} themes`);
+      console.log(`✅ Loaded templates config:`, templatesConfig);
     }
   } catch (error) {
     console.error('Failed to load themes:', error);
-    // Fallback to default theme
+    // Fallback to default theme and templates
     themesConfig = {
       altro: {
         title: 'Altro argomento',
         topics: []
+      }
+    };
+    templatesConfig = {
+      subject: 'Richiesta da cittadino di {comune}: {tema}',
+      body: {
+        greeting: 'Gentile {titolo} {cognome},',
+        introduction: 'Le scrivo come cittadino di {comune} in merito {prefisso} {tema}.',
+        topics_header: 'Punti principali:',
+        closing: 'Cordiali saluti,\n[Nome e cognome]'
       }
     };
   }
@@ -432,9 +444,20 @@ function getSelectedTopics() {
  * @param {string} themeTitle - Theme title
  * @returns {string} Subject line
  */
-function buildSubject(identity, cityName, themeTitle) {
+function buildSubject(identity, cityName, themeTitle, themeId) {
+  if (templatesConfig && templatesConfig.subject) {
+    const who = identity === 'elettore' ? 'un suo elettore' : 'un cittadino';
+    // Use [Personalizza] for "altro" theme in subject
+    const displayTitle = themeId === 'altro' ? '[Personalizza]' : themeTitle;
+    return templatesConfig.subject
+      .replace('{comune}', cityName)
+      .replace('{tema}', displayTitle)
+      .replace('cittadino', who);
+  }
+  // Fallback
   const who = identity === 'elettore' ? 'un suo elettore' : 'un cittadino';
-  return `Richiesta da ${who} di ${cityName}: ${themeTitle}`;
+  const displayTitle = themeId === 'altro' ? '[Personalizza]' : themeTitle;
+  return `Richiesta da ${who} di ${cityName}: ${displayTitle}`;
 }
 
 /**
@@ -443,21 +466,47 @@ function buildSubject(identity, cityName, themeTitle) {
  * @param {string} lastName - Representative's last name
  * @param {string} cityName - User's city name
  * @param {string} themeTitle - Theme title
+ * @param {string} themeId - Theme ID for prefix lookup
  * @param {string} institution - Institution type
  * @returns {string} Message introduction
  */
-function buildIntro(identity, lastName, cityName, themeTitle, institution) {
+function buildIntro(identity, lastName, cityName, themeTitle, themeId, institution) {
   const who = identity === 'elettore' ? 'suo elettore' : 'cittadino';
   
   // Build salutation
   const titleMap = {
     camera: 'Onorevole',
-    senato: 'Onorevole',
+    senato: 'Onorevole', 
     eu: 'Onorevole'
   };
   const title = titleMap[institution] || 'Onorevole';
   
-  return `Gentile ${title} ${lastName},\n\nLe scrivo come ${who} residente a ${cityName} in merito a ${themeTitle}.`;
+  if (templatesConfig && templatesConfig.body) {
+    // Get theme prefix for grammar
+    const theme = themesConfig[themeId];
+    const prefix = theme?.prefix || 'a';
+    
+    // Build greeting
+    const greeting = templatesConfig.body.greeting
+      .replace('{titolo}', title)
+      .replace('{cognome}', lastName);
+    
+    // Use [Personalizza] for "altro" theme in body
+    const displayTitle = themeId === 'altro' ? '[Personalizza]' : themeTitle;
+    
+    // Build introduction with proper grammar
+    const introduction = templatesConfig.body.introduction
+      .replace('{comune}', cityName)
+      .replace('{prefisso}', prefix)
+      .replace('{tema}', displayTitle)
+      .replace('cittadino', who);
+    
+    return `${greeting}\n\n${introduction}`;
+  }
+  
+  // Fallback
+  const displayTitle = themeId === 'altro' ? '[Personalizza]' : themeTitle;
+  return `Gentile ${title} ${lastName},\n\nLe scrivo come ${who} residente a ${cityName} in merito a ${displayTitle}.`;
 }
 
 /**
@@ -476,7 +525,7 @@ function updateMessageFields(theme) {
   composerState.themeId = theme ? Object.keys(themesConfig).find(key => themesConfig[key] === theme) : null;
   
   // Update subject
-  const subject = buildSubject(composerState.identity, cityName, theme.title);
+  const subject = buildSubject(composerState.identity, cityName, theme.title, composerState.themeId);
   const subjectInput = document.getElementById('subjectInput');
   if (subjectInput && !composerState.subjectEdited) {
     subjectInput.value = subject;
@@ -506,19 +555,24 @@ function updateMessageBody() {
   const lastName = rep.cognome;
   
   // Build message intro
-  const intro = buildIntro(composerState.identity, lastName, cityName, theme.title, institution);
+  const intro = buildIntro(composerState.identity, lastName, cityName, theme.title, themeSelect.value, institution);
   
   // Add topics if selected
   const selectedTopics = getSelectedTopics();
   let topicsSection = '';
   if (selectedTopics.length > 0) {
-    topicsSection = '\n\nPunti principali:\n';
+    const topicsHeader = (templatesConfig && templatesConfig.body && templatesConfig.body.topics_header) 
+      ? templatesConfig.body.topics_header 
+      : 'Punti principali:';
+    topicsSection = `\n\n${topicsHeader}\n`;
     selectedTopics.forEach(topic => {
       topicsSection += `• ${topic}\n`;
     });
   }
   
-  const signature = '\n\nCordiali saluti,\n[Nome e cognome]';
+  const signature = (templatesConfig && templatesConfig.body && templatesConfig.body.closing) 
+    ? `\n\n${templatesConfig.body.closing}` 
+    : '\n\nCordiali saluti,\n[Nome e cognome]';
   const fullBody = intro + topicsSection + signature;
   
   // Only update if user hasn't manually edited the introduction

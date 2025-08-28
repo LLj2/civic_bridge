@@ -11,7 +11,8 @@
       "WebSearch",
       "Bash(find:*)",
       "Bash(grep:*)",
-      "Bash(sed:*)"
+      "Bash(sed:*)",
+      "Bash(python3:*)"
     ],
     "deny": [],
     "ask": []
