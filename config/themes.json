@@ -7,15 +7,15 @@
       "greeting": "{titolo} {cognome},",
       "introduction": "Mi rivolgo a Lei come cittadino residente a {comune}, per esprimere la mia grave preoccupazione in merito {prefisso} {tema}.",
       "topics_header": "Le chiedo con urgenza di farsi promotore delle seguenti azioni:",
-      "closing": "Sono certo che terrà in considerazione la voce dei suoi elettori.\nLa ringrazio per l'attenzione e resto in attesa di un suo riscontro.\nCordiali saluti,\n[Firma opzionale]"
+      "closing": "Sono certo che terrà in considerazione la voce dei suoi elettori.\nLa ringrazio per l'attenzione e resto in attesa di un suo riscontro.\nCordiali saluti,\n[Nome e cognome]"
     }
   },
   "themes": {
     "guerra_palestina": {
       "order": 1,
-      "title": "Guerra in Palestina",
+      "title": "Genocidio in corso a Gaza",
       "prefix": "alla",
-      "description": "Richieste relative al conflitto israelo-palestinese",
+      "description": "Richieste relative al genocidio palestinese",
       "topics": [
         {
           "id": "cessate_fuoco",

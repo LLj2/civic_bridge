@@ -696,6 +696,33 @@ function hideFieldError(fieldId) {
 }
 
 /**
+ * Validate placeholders in message
+ * @param {string} subject - Email subject
+ * @param {string} body - Email body
+ * @returns {Array} Array of found placeholders
+ */
+function validatePlaceholders(subject, body) {
+  const placeholders = [];
+  
+  // Check for [Personalizza] in subject or body
+  if (subject.includes('[Personalizza]') || body.includes('[Personalizza]')) {
+    placeholders.push('[Personalizza]');
+  }
+  
+  // Check for [Nome e cognome] in body
+  if (body.includes('[Nome e cognome]')) {
+    placeholders.push('[Nome e cognome]');
+  }
+  
+  // Check for [Firma opzionale] in body (backwards compatibility)
+  if (body.includes('[Firma opzionale]')) {
+    placeholders.push('[Firma opzionale]');
+  }
+  
+  return placeholders;
+}
+
+/**
  * Copy message text to clipboard
  */
 export function copyMessageText() {
@@ -766,6 +793,24 @@ export function openEmailClient() {
     return;
   }
   
+  // Check for placeholders
+  const foundPlaceholders = validatePlaceholders(subject, body);
+  if (foundPlaceholders.length > 0) {
+    const placeholderList = foundPlaceholders.join(', ');
+    const message = `Il messaggio contiene placeholder da personalizzare: ${placeholderList}\n\nVuoi modificare il messaggio prima di inviare?`;
+    
+    if (confirm(message)) {
+      // User wants to edit - focus on the first field with placeholder
+      if (subject.includes('[Personalizza]')) {
+        document.getElementById('subjectInput').focus();
+      } else {
+        document.getElementById('bodyTextarea').focus();
+      }
+      return;
+    }
+    // User chose to send anyway - continue with mailto
+  }
+  
   const mailto = `mailto:${encodeURIComponent(selectedRep.email)}` +
     `?subject=${encodeURIComponent(subject)}` +
     `&body=${encodeURIComponent(body)}`;
@@ -799,6 +844,24 @@ export async function sendViaOAuth() {
   }
   
   hideFieldError('subjectInput');
+  
+  // Check for placeholders
+  const foundPlaceholders = validatePlaceholders(subject, body);
+  if (foundPlaceholders.length > 0) {
+    const placeholderList = foundPlaceholders.join(', ');
+    const message = `Il messaggio contiene placeholder da personalizzare: ${placeholderList}\n\nVuoi modificare il messaggio prima di inviare?`;
+    
+    if (confirm(message)) {
+      // User wants to edit - focus on the first field with placeholder
+      if (subject.includes('[Personalizza]')) {
+        document.getElementById('subjectInput').focus();
+      } else {
+        document.getElementById('bodyTextarea').focus();
+      }
+      return;
+    }
+    // User chose to send anyway - continue with OAuth send
+  }
   
   // TODO: Implement actual OAuth sending
   showNotification('Email inviata con successo', 'success');
